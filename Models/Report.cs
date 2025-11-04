@@ -1,7 +1,5 @@
-﻿using System;
+﻿using ReportSystem.Enums;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using ReportSystem.Enums;
 
 namespace ReportSystem.Models
 {
@@ -22,15 +20,11 @@ namespace ReportSystem.Models
         [StringLength(255)]
         public string? Description { get; set; }
 
-        [RegularExpression(@"^[A-Z]+[a-zA-Z\s]*$")]
-        [StringLength(12)]
         [Required]
-        public string? Status { get; set; }
+        public ReportStatus Status { get; set; }
 
         [Display(Name = "Importance Rating")]
-        [RegularExpression(@"^[A-Z]+[a-zA-Z0-9""'\s-]*$")]
-        [StringLength(6)]
         [Required]
-        public string? ImportanceRating { get; set; }
+        public ImportanceRating ImportanceRating { get; set; }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ReportSystem.Data;
+using ReportSystem.Enums;
 
 namespace ReportSystem.Models
 {
@@ -22,32 +23,32 @@ namespace ReportSystem.Models
                         Title = "Web Project - Planning",
                         ReportDate = DateTime.Parse("2025-01-15"),
                         Description = "Project goals and timeline.",
-                        Status = "Not Reviewed",
-                        ImportanceRating = "High"
+                        Status = ReportStatus.Not_Reviewed,
+                        ImportanceRating = ImportanceRating.High
                     },
                     new Report
                     {
                         Title = "Web Project - Design",
                         ReportDate = DateTime.Parse("2025-03-01"),
                         Description = "UI/UX design progress.",
-                        Status = "Under Review",
-                        ImportanceRating = "Medium"
+                        Status = ReportStatus.Under_Review,
+                        ImportanceRating = ImportanceRating.Medium
                     },
                     new Report
                     {
                         Title = "Web Project - Development",
                         ReportDate = DateTime.Parse("2025-05-20"),
                         Description = "Coding and testing updates.",
-                        Status = "Under Review",
-                        ImportanceRating = "High"
+                        Status = ReportStatus.Under_Review,
+                        ImportanceRating = ImportanceRating.High
                     },
                     new Report
                     {
                         Title = "Web Project - Launch",
                         ReportDate = DateTime.Parse("2025-07-10"),
                         Description = "Final delivery summary.",
-                        Status = "Reviewed",
-                        ImportanceRating = "Low"
+                        Status = ReportStatus.Reviewed,
+                        ImportanceRating = ImportanceRating.Low
                     }
                 );
                 context.SaveChanges();

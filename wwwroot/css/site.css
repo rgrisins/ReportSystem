@@ -29,3 +29,37 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
 }
+
+.btn-cadet-blue {
+    background-color: #5F9EA0;
+}
+
+.btn-cadet-blue:hover {
+    background-color: #60bfc2;
+}
+
+.btn-jade {
+    background-color: #00A36C;
+}
+
+.btn-jade:hover {
+    background-color: #09bd80;
+}
+
+.card {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.4s ease-in forwards;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
