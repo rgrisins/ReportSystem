@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using ReportSystem.Enums;
+
 
 namespace ReportSystem.Models
 {
@@ -8,5 +10,7 @@ namespace ReportSystem.Models
         public SelectList? Statuses { get; set; }
         public string? ReportStatus { get; set; }
         public string? SearchString { get; set; }
+        public int TotalCount { get; set; }
+        public Dictionary<ReportStatus, int> StatusCounts { get; set; } = new();
     }
 }

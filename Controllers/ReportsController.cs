@@ -32,7 +32,9 @@ namespace ReportSystem.Controllers
             var reportStatusVM = new ReportStatusViewModel
             {
                 Statuses = new SelectList(await statusQuery.Distinct().ToListAsync()),
-                Reports = await reports.ToListAsync()
+                Reports = await reports.ToListAsync(),
+                TotalCount = GetTotalReportCount(),
+                StatusCounts = GetStatusCounts()
             };
 
             return View(reportStatusVM);
@@ -173,5 +175,20 @@ namespace ReportSystem.Controllers
             }
         }
 
+        private int GetTotalReportCount()
+        {
+            return _context.Report.Count();
+        }
+
+        private Dictionary<ReportStatus, int> GetStatusCounts()
+        {
+            var statusCounts = new Dictionary<ReportStatus, int>();
+            foreach (ReportStatus status in Enum.GetValues(typeof(ReportStatus)))
+            {
+                int count = _context.Report.Count(r => r.Status == status);
+                statusCounts[status] = count;
+            }
+            return statusCounts;
+        }
     }
 }

@@ -1,6 +1,7 @@
-using System.Diagnostics;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using ReportSystem.Models;
+using System.Diagnostics;
 
 namespace ReportSystem.Controllers
 {
@@ -27,6 +28,22 @@ namespace ReportSystem.Controllers
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+
+        public IActionResult NotFoundPage()
+        {
+            var feature = HttpContext.Features.Get<IStatusCodeReExecuteFeature>();
+
+            if (feature != null)
+            {
+                ViewData["Path"] = feature.OriginalPath;
+            }
+            else
+            {
+                ViewData["Path"] = HttpContext.Request.Path;
+            }
+
+            return View("NotFound");
         }
     }
 }

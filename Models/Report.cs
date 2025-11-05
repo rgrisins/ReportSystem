@@ -1,4 +1,5 @@
 ﻿using ReportSystem.Enums;
+using ReportSystem.Validation;
 using System.ComponentModel.DataAnnotations;
 
 namespace ReportSystem.Models
@@ -14,6 +15,7 @@ namespace ReportSystem.Models
         [Display(Name = "Report Date")]
         [DataType(DataType.Date)]
         [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}", ApplyFormatInEditMode = true)]
+        [MaxDateToday]
         public DateTime ReportDate { get; set; }
 
         [Required]
