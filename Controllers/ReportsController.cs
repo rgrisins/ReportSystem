@@ -18,7 +18,7 @@ namespace ReportSystem.Controllers
         }
 
         // GET: Reports
-        public async Task<IActionResult> Index(string reportStatus, string searchString)
+        public async Task<IActionResult> Index(string importanceRating, string reportStatus, string searchString, DateTime? dateFrom, DateTime? dateTo)
         {
             if (_context.Report == null)
             {
@@ -27,14 +27,17 @@ namespace ReportSystem.Controllers
 
             var statusQuery = GetStatusQuery();
 
-            var reports = FilterReportsByStatus(SearchReports(searchString), reportStatus);
+            var reports = FilterReportsByDate(FilterReportsByImportance(FilterReportsByStatus(SearchReports(searchString), reportStatus), importanceRating), dateFrom, dateTo);
 
             var reportStatusVM = new ReportStatusViewModel
             {
-                Statuses = new SelectList(await statusQuery.Distinct().ToListAsync()),
+                Statuses = new SelectList(Enum.GetValues(typeof(ReportStatus))),
+                Ratings = new SelectList(Enum.GetValues(typeof(ImportanceRating))),
                 Reports = await reports.ToListAsync(),
                 TotalCount = GetTotalReportCount(),
-                StatusCounts = GetStatusCounts()
+                StatusCounts = GetStatusCounts(),
+                DateFrom = dateFrom,
+                DateTo = dateTo
             };
 
             return View(reportStatusVM);
@@ -152,6 +155,29 @@ namespace ReportSystem.Controllers
             if (!string.IsNullOrEmpty(reportStatus))
             {
                 return reports.Where(x => x.Status.ToString() == reportStatus);
+            }
+            return reports;
+        }
+
+        private IQueryable<Report> FilterReportsByImportance(IQueryable<Report> reports, string importanceRating)
+        {
+            if (!string.IsNullOrEmpty(importanceRating))
+            {
+                Console.WriteLine(importanceRating);
+                return reports.Where(x => x.ImportanceRating.ToString() == importanceRating);
+            }
+            return reports;
+        }
+
+        private IQueryable<Report> FilterReportsByDate(IQueryable<Report> reports, DateTime? dateFrom, DateTime? dateTo)
+        {
+            if (dateFrom.HasValue)
+            {
+                reports = reports.Where(r => r.ReportDate >= dateFrom.Value);
+            }
+            if (dateTo.HasValue)
+            {
+                reports = reports.Where(r => r.ReportDate <= dateTo.Value);
             }
             return reports;
         }

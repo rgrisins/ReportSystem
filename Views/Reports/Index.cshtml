@@ -25,16 +25,30 @@
     <form asp-controller="Reports" asp-action="Index" method="get" class="align-content-center d-flex">
         <p class="align-content-center d-flex p-0 m-0 w-100">
 
-            <select asp-for="ReportStatus" asp-items="Model.Statuses" class="form-select me-4">
-                <option value="">All</option>
-            </select>
-
-            <label class="d-flex flex-row align-items-center me-4 w-100">
+            <label class="d-flex flex-row align-items-center me-2 w-100">
                 <span class="me-2 fw-bold">Title:</span>
                 <input type="text" asp-for="SearchString" class="form-control flex-grow-2" placeholder="Enter search" />
             </label>
 
-            <input type="submit" value="Filter" class="btn btn-jade"/>
+            <label class="d-flex flex-row align-items-center me-2">
+                <span class="me-2 fw-bold">From: </span>
+                <input type="date" asp-for="DateFrom" class="form-control" />
+            </label>
+            <label class="d-flex flex-row align-items-center me-2">
+                <span class="me-2 fw-bold">To:</span>
+                <input type="date" asp-for="DateTo" class="form-control" />
+            </label>
+
+            <select asp-for="ReportStatus" asp-items="Model.Statuses" class="form-select me-2">
+                <option value="">All</option>
+            </select>
+
+            <select asp-for="ImportanceRating" asp-items="Model.Ratings" class="form-select me-3">
+                <option value="">All</option>
+            </select>
+
+            <input type="submit" value="Filter" class="btn btn-jade me-2"/>
+            <a asp-action="Index" class="btn btn-danger">Clear</a>
         </p>
     </form>
 </div>
