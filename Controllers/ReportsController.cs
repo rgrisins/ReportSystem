@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using ReportSystem.Data;
 using ReportSystem.Enums;
 using ReportSystem.Models;
+using ReportSystem.Services;
 
 
 namespace ReportSystem.Controllers
@@ -11,22 +12,31 @@ namespace ReportSystem.Controllers
     public class ReportsController : Controller
     {
         private readonly ReportSystemContext _context;
+        private readonly SessionService _sessionService;
 
-        public ReportsController(ReportSystemContext context)
+        public ReportsController(ReportSystemContext context, SessionService sessionService)
         {
             _context = context;
+            _sessionService = sessionService;
         }
 
-        // GET: Reports
+        private bool IsUserAuthenticated()
+        {
+            var sessionId = Request.Cookies["SessionId"];
+            if (string.IsNullOrEmpty(sessionId))
+                return false;
+
+            var token = _sessionService.GetToken(sessionId);
+            return token != null;
+        }
+
         public async Task<IActionResult> Index(string importanceRating, string reportStatus, string searchString, DateTime? dateFrom, DateTime? dateTo)
         {
-            if (_context.Report == null)
-            {
-                return Problem("Entity set 'ReportSystemContext.Report'  is null.");
-            }
+            if (!IsUserAuthenticated())
+                return RedirectToAction("Login", "Auth");
 
+            // Tālāk tava esošā Index loģika
             var statusQuery = GetStatusQuery();
-
             var reports = FilterReportsByDate(FilterReportsByImportance(FilterReportsByStatus(SearchReports(searchString), reportStatus), importanceRating), dateFrom, dateTo);
 
             var reportStatusVM = new ReportStatusViewModel

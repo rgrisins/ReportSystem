@@ -10,7 +10,8 @@ namespace ReportSystem.Data
         {
         }
 
-        public DbSet<ReportSystem.Models.Report> Report { get; set; } = default!;
+        public DbSet<Report> Report { get; set; } = default!;
+        public DbSet<User> User { get; set; } = default!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -20,6 +21,10 @@ namespace ReportSystem.Data
 
             modelBuilder.Entity<Report>()
                 .Property(r => r.ImportanceRating)
+                .HasConversion<string>();
+
+            modelBuilder.Entity<User>()
+                .Property(r => r.Role)
                 .HasConversion<string>();
 
             base.OnModelCreating(modelBuilder);

@@ -1,12 +1,43 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using ReportSystem.Data;
 using ReportSystem.Models;
+using ReportSystem.Services;
+using StackExchange.Redis;
+using System.Text;
+
+var muxer = ConnectionMultiplexer.Connect("localhost");
+
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ReportSystemContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("ReportSystemContext") ?? throw new InvalidOperationException("Connection string 'ReportSystemContext' not found.")));
 
-// Add services to the container.
+builder.Services.AddSingleton<IConnectionMultiplexer>(muxer);
+builder.Services.AddSingleton<JwtService>();
+builder.Services.AddSingleton<SessionService>();
+builder.Services.AddScoped<UserSessionService>();
+
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["JwtConfig:Issuer"],
+            ValidAudience = builder.Configuration["JwtConfig:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["JwtConfig:Key"])
+            ),
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -27,6 +58,7 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseStatusCodePagesWithReExecute("/Home/NotFoundPage");
