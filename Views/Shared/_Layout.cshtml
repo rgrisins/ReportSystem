@@ -29,14 +29,14 @@
                         </li>
                     </ul>
 
-                    <div class="form-check form-switch d-flex align-content-center me-5 fs-6">
+                    <div class="form-check form-switch d-flex align-content-center me-3 fs-6">
                         <input id="themeToggle" class="form-check-input me-2" type="checkbox">
                         <label class="form-check-label" for="themeToggle">Light Mode</label>
                     </div>
 
                     @inject ReportSystem.Services.UserSessionService UserSessionService
 
-                    <ul class="navbar-nav fs-6">
+                    <ul class="navbar-nav fs-6 border-start ps-3">
                         @if (UserSessionService.IsAuthenticated(Context))
                         {
                             <li class="nav-item">

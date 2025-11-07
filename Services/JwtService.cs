@@ -11,14 +11,17 @@ namespace ReportSystem.Services
         private readonly IConfiguration _config;
         private readonly TimeSpan _expiry = TimeSpan.FromHours(2);
 
+        // Constructor that sets the configuration dependency
         public JwtService(IConfiguration config)
         {
             _config = config;
         }
 
+        // Method to generate a JWT token for a given user
         public string GenerateToken(User user)
         {
             var key = Encoding.UTF8.GetBytes(_config["JwtConfig:Key"]);
+
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),

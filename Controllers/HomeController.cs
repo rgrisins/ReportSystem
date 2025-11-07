@@ -30,6 +30,7 @@ namespace ReportSystem.Controllers
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
+        // Handle 404 Not Found errors
         public IActionResult NotFoundPage()
         {
             var feature = HttpContext.Features.Get<IStatusCodeReExecuteFeature>();

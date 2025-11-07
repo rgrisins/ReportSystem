@@ -7,19 +7,24 @@ using ReportSystem.Services;
 using StackExchange.Redis;
 using System.Text;
 
+// Initialize Redis connection
 var muxer = ConnectionMultiplexer.Connect("localhost");
 
+// Create the web application builder
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ReportSystemContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("ReportSystemContext") ?? throw new InvalidOperationException("Connection string 'ReportSystemContext' not found.")));
 
+// Register services for dependency injection
 builder.Services.AddSingleton<IConnectionMultiplexer>(muxer);
 builder.Services.AddSingleton<JwtService>();
 builder.Services.AddSingleton<SessionService>();
 builder.Services.AddScoped<UserSessionService>();
 
+// Add controllers with views support
 builder.Services.AddControllersWithViews();
 
+// Configure JWT authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -37,10 +42,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+// Add authorization services
 builder.Services.AddAuthorization();
 
+// Build the web application
 var app = builder.Build();
 
+// Seed the database with initial data
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -55,12 +63,11 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+// Middleware configuration
 app.UseHttpsRedirection();
 app.UseRouting();
-
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.UseStatusCodePagesWithReExecute("/Home/NotFoundPage");
 
 app.MapStaticAssets();
@@ -70,5 +77,5 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
-
+// Run the application
 app.Run();

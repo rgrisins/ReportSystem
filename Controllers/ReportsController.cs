@@ -14,12 +14,14 @@ namespace ReportSystem.Controllers
         private readonly ReportSystemContext _context;
         private readonly SessionService _sessionService;
 
+        // Constructor that sets the ReportSystemContext and SessionService dependencies
         public ReportsController(ReportSystemContext context, SessionService sessionService)
         {
             _context = context;
             _sessionService = sessionService;
         }
 
+        // Method to check if user is authenticated
         private bool IsUserAuthenticated()
         {
             var sessionId = Request.Cookies["SessionId"];
@@ -30,13 +32,12 @@ namespace ReportSystem.Controllers
             return token != null;
         }
 
+        // GET: Reports
         public async Task<IActionResult> Index(string importanceRating, string reportStatus, string searchString, DateTime? dateFrom, DateTime? dateTo)
         {
             if (!IsUserAuthenticated())
                 return RedirectToAction("Login", "Auth");
 
-            // Tālāk tava esošā Index loģika
-            var statusQuery = GetStatusQuery();
             var reports = FilterReportsByDate(FilterReportsByImportance(FilterReportsByStatus(SearchReports(searchString), reportStatus), importanceRating), dateFrom, dateTo);
 
             var reportStatusVM = new ReportStatusViewModel
@@ -133,15 +134,7 @@ namespace ReportSystem.Controllers
             return _context.Report.Any(e => e.Id == id);
         }
 
-        private IQueryable<ReportStatus> GetStatusQuery()
-        {
-            // Use LINQ to get list of statuses.
-            IQueryable<ReportStatus> statusQuery = from m in _context.Report
-                                                   orderby m.Status
-                                                   select m.Status;
-            return statusQuery;
-        }
-
+        // Method to get all reports
         private IQueryable<Report> GetReports()
         {
             // Use LINQ to get list of Reports.
@@ -169,6 +162,7 @@ namespace ReportSystem.Controllers
             return reports;
         }
 
+        // Method to filter reports by importance rating
         private IQueryable<Report> FilterReportsByImportance(IQueryable<Report> reports, string importanceRating)
         {
             if (!string.IsNullOrEmpty(importanceRating))
@@ -179,6 +173,7 @@ namespace ReportSystem.Controllers
             return reports;
         }
 
+        // Method to filter reports by date range
         private IQueryable<Report> FilterReportsByDate(IQueryable<Report> reports, DateTime? dateFrom, DateTime? dateTo)
         {
             if (dateFrom.HasValue)
@@ -192,6 +187,7 @@ namespace ReportSystem.Controllers
             return reports;
         }
 
+        // Method to get report view by id
         private async Task<IActionResult?> GetReportViewById(int? id)
         {
             if (id == null) { return NotFound(); }
@@ -203,6 +199,7 @@ namespace ReportSystem.Controllers
             return View(report);
         }
 
+        // Method to remove report
         private void RemoveReport(Report report)
         {
             if (report != null)
@@ -211,11 +208,13 @@ namespace ReportSystem.Controllers
             }
         }
 
+        // Method to get total report count
         private int GetTotalReportCount()
         {
             return _context.Report.Count();
         }
 
+        // Method to get counts of reports by status
         private Dictionary<ReportStatus, int> GetStatusCounts()
         {
             var statusCounts = new Dictionary<ReportStatus, int>();

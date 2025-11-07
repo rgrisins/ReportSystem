@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ReportSystem.Data;
+using ReportSystem.Enums;
 using ReportSystem.Models;
 using ReportSystem.Services;
 
@@ -11,6 +12,7 @@ public class AuthController : Controller
     private readonly JwtService _jwtService;
     private readonly SessionService _sessionService;
 
+    // Constructor that sets the ReportSystemContext, JwtService and SessionService dependencies
     public AuthController(ReportSystemContext context, JwtService jwtService, SessionService sessionService)
     {
         _context = context;
@@ -28,26 +30,31 @@ public class AuthController : Controller
     // POST Register form
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Register(User request)
+    public async Task<IActionResult> Register(RegisterRequest request)
     {
         if (!ModelState.IsValid)
+            return View(request);
+
+        if (_context.User.Any(u => u.Email == request.Email))
         {
-            if (_context.User.Any(u => u.Email == request.Email))
-            {
-                ModelState.AddModelError("", "Selected Email is in use.");
-                return View(request);
-            }
+            ModelState.AddModelError("", "Selected Email is already in use.");
             return View(request);
         }
 
-        var hasher = new PasswordHasher<User>();
-        request.PasswordHash = hasher.HashPassword(request, request.PasswordHash);
-        request.CreationDate = DateTime.UtcNow;
+        var user = new User
+        {
+            Username = request.Username,
+            Email = request.Email,
+            Role = UserRole.User,
+        };
 
-        _context.User.Add(request);
+        var hasher = new PasswordHasher<User>();
+        user.PasswordHash = hasher.HashPassword(user, request.Password);
+
+        _context.User.Add(user);
         await _context.SaveChangesAsync();
 
-        var token = _jwtService.GenerateToken(request);
+        var token = _jwtService.GenerateToken(user);
         var sessionId = Guid.NewGuid().ToString();
         _sessionService.SaveSession(sessionId, token, TimeSpan.FromHours(2));
 
@@ -97,7 +104,7 @@ public class AuthController : Controller
         return RedirectToAction("Index", "Home");
     }
 
-    // Logout
+    // POST Logout
     [HttpPost]
     [ValidateAntiForgeryToken]
     public IActionResult Logout()

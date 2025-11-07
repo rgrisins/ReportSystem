@@ -15,6 +15,7 @@ namespace ReportSystem.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // Configure enum properties to be stored as strings
             modelBuilder.Entity<Report>()
                 .Property(r => r.Status)
                 .HasConversion<string>();

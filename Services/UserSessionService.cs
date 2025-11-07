@@ -6,11 +6,13 @@ namespace ReportSystem.Services
     {
         private readonly SessionService _sessionService;
 
+        // Constructor, that sets the SessionService dependency
         public UserSessionService(SessionService sessionService)
         {
             _sessionService = sessionService;
         }
 
+        // Method to check if the user is authenticated based on the session_id cookie
         public bool IsAuthenticated(HttpContext httpContext)
         {
             var sessionId = httpContext.Request.Cookies["SessionId"];
@@ -19,6 +21,7 @@ namespace ReportSystem.Services
             return token != null;
         }
 
+        // Method to get the username from the JWT token stored in the Redis session
         public string? GetUserName(HttpContext httpContext)
         {
             var sessionId = httpContext.Request.Cookies["SessionId"];
@@ -37,6 +40,7 @@ namespace ReportSystem.Services
             return userName;
         }
 
+        // Method to get the user role from the JWT token stored in the Redis session
         public string? GetUserRole(HttpContext httpContext)
         {
             var sessionId = httpContext.Request.Cookies["SessionId"];
