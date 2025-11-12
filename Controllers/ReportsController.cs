@@ -22,7 +22,6 @@ namespace ReportSystem.Controllers
             _sessionService = sessionService;
         }
 
-        [Authorize(Roles = "Admin")]
         // GET: Reports
         public async Task<IActionResult> Index(string importanceRating, string reportStatus, string searchString, DateTime? dateFrom, DateTime? dateTo)
         {
@@ -49,12 +48,14 @@ namespace ReportSystem.Controllers
         }
 
         // GET: Reports/Create
+        [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
             return View();
         }
 
         // POST: Reports/Create
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Title,ReportDate,Description,Status,ImportanceRating")] Report report)
@@ -69,12 +70,14 @@ namespace ReportSystem.Controllers
         }
 
         // GET: Reports/Edit/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int? id)
         {
             return await GetReportViewById(id);
         }
 
         // POST: Reports/Edit/5
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Title,ReportDate,Description,Status,ImportanceRating")] Report report)
@@ -99,6 +102,7 @@ namespace ReportSystem.Controllers
         }
 
         // GET: Reports/Delete/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
             return await GetReportViewById(id);
@@ -106,6 +110,7 @@ namespace ReportSystem.Controllers
 
         // POST: Reports/Delete/5
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id, bool notUsed)
         {
