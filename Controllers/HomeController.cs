@@ -46,5 +46,14 @@ namespace ReportSystem.Controllers
 
             return View("NotFound");
         }
+
+        // Handle 403 Forbidden errors
+        public IActionResult ForbiddenPage()
+        {
+            var originalPath = HttpContext.Request.Query["originalPath"].FirstOrDefault();
+            ViewData["Path"] = originalPath;
+            return View("Forbidden");
+        }
+
     }
 }

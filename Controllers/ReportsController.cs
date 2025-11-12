@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ReportSystem.Data;
@@ -21,23 +22,10 @@ namespace ReportSystem.Controllers
             _sessionService = sessionService;
         }
 
-        // Method to check if user is authenticated
-        private bool IsUserAuthenticated()
-        {
-            var sessionId = Request.Cookies["SessionId"];
-            if (string.IsNullOrEmpty(sessionId))
-                return false;
-
-            var token = _sessionService.GetToken(sessionId);
-            return token != null;
-        }
-
+        [Authorize(Roles = "Admin")]
         // GET: Reports
         public async Task<IActionResult> Index(string importanceRating, string reportStatus, string searchString, DateTime? dateFrom, DateTime? dateTo)
         {
-            if (!IsUserAuthenticated())
-                return RedirectToAction("Login", "Auth");
-
             var reports = FilterReportsByDate(FilterReportsByImportance(FilterReportsByStatus(SearchReports(searchString), reportStatus), importanceRating), dateFrom, dateTo);
 
             var reportStatusVM = new ReportStatusViewModel

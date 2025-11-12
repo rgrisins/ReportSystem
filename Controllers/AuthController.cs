@@ -1,33 +1,34 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ReportSystem.Data;
 using ReportSystem.Enums;
 using ReportSystem.Models;
 using ReportSystem.Services;
 
 public class AuthController : Controller
 {
-    private readonly ReportSystemContext _context;
+    private readonly UserManager<User> _userManager;
+    private readonly SignInManager<User> _signInManager;
     private readonly JwtService _jwtService;
     private readonly SessionService _sessionService;
+    private readonly IConfiguration _config;
 
-    // Constructor that sets the ReportSystemContext, JwtService and SessionService dependencies
-    public AuthController(ReportSystemContext context, JwtService jwtService, SessionService sessionService)
+    public AuthController(
+        UserManager<User> userManager,
+        SignInManager<User> signInManager,
+        JwtService jwtService,
+        SessionService sessionService,
+        IConfiguration config)
     {
-        _context = context;
+        _userManager = userManager;
+        _signInManager = signInManager;
         _jwtService = jwtService;
         _sessionService = sessionService;
+        _config = config;
     }
 
-    // GET Register page
     [HttpGet]
-    public IActionResult Register()
-    {
-        return View();
-    }
+    public IActionResult Register() => View();
 
-    // POST Register form
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(RegisterRequest request)
@@ -35,86 +36,154 @@ public class AuthController : Controller
         if (!ModelState.IsValid)
             return View(request);
 
-        if (_context.User.Any(u => u.Email == request.Email))
+        var existingUser = await _userManager.FindByEmailAsync(request.Email);
+        if (existingUser != null)
         {
-            ModelState.AddModelError("", "Selected Email is already in use.");
+            ModelState.AddModelError("", "Email is already in use.");
             return View(request);
         }
 
         var user = new User
         {
-            Username = request.Username,
+            UserName = request.Username,
             Email = request.Email,
-            Role = UserRole.User,
+            Role = UserRole.User
         };
 
-        var hasher = new PasswordHasher<User>();
-        user.PasswordHash = hasher.HashPassword(user, request.Password);
+        var result = await _userManager.CreateAsync(user, request.Password);
+        if (!result.Succeeded)
+        {
+            foreach (var error in result.Errors)
+                ModelState.AddModelError("", error.Description);
+            return View(request);
+        }
 
-        _context.User.Add(user);
-        await _context.SaveChangesAsync();
+        var accessToken = _jwtService.GenerateAccessToken(user);
+        var refreshToken = _jwtService.GenerateRefreshToken();
+        _sessionService.SaveRefreshToken(refreshToken, user.Id.ToString(), _jwtService.GetRefreshTokenExpiry());
 
-        var token = _jwtService.GenerateToken(user);
-        var sessionId = Guid.NewGuid().ToString();
-        _sessionService.SaveSession(sessionId, token, TimeSpan.FromHours(2));
+        Response.Cookies.Append("accessToken", accessToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTime.UtcNow.AddMinutes(int.Parse(_config["JwtConfig:AccessTokenValidityMins"]))
+        });
 
-        Response.Cookies.Append("SessionId", sessionId);
+        Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTime.UtcNow.Add(_jwtService.GetRefreshTokenExpiry())
+        });
 
         return RedirectToAction("Index", "Home");
     }
 
-    // GET Login page
     [HttpGet]
-    public IActionResult Login()
-    {
-        return View();
-    }
+    public IActionResult Login() => View();
 
-    // POST Login form
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login(LoginRequest request)
     {
         if (!ModelState.IsValid)
-        {
             return View(request);
-        }
 
-        var user = await _context.User.FirstOrDefaultAsync(u => u.Email == request.Email);
+        var user = await _userManager.FindByEmailAsync(request.Email);
         if (user == null)
         {
-            ModelState.AddModelError("", "User with the specified email does not exist");
+            ModelState.AddModelError("", "User not found");
             return View(request);
         }
 
-        var hasher = new PasswordHasher<User>();
-        var result = hasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
-        if (result == PasswordVerificationResult.Failed)
+        var passwordValid = await _userManager.CheckPasswordAsync(user, request.Password);
+        if (!passwordValid)
         {
-            ModelState.AddModelError("", "Invalid credentials");
+            ModelState.AddModelError("", "Invalid password");
             return View(request);
         }
 
-        var token = _jwtService.GenerateToken(user);
-        var sessionId = Guid.NewGuid().ToString();
-        _sessionService.SaveSession(sessionId, token, TimeSpan.FromHours(2));
+        var accessToken = _jwtService.GenerateAccessToken(user);
+        var refreshToken = _jwtService.GenerateRefreshToken();
+        _sessionService.SaveRefreshToken(refreshToken, user.Id.ToString(), _jwtService.GetRefreshTokenExpiry());
 
-        Response.Cookies.Append("SessionId", sessionId);
+        Response.Cookies.Append("accessToken", accessToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTime.UtcNow.AddMinutes(int.Parse(_config["JwtConfig:AccessTokenValidityMins"]))
+        });
+
+        Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTime.UtcNow.Add(_jwtService.GetRefreshTokenExpiry())
+        });
 
         return RedirectToAction("Index", "Home");
     }
 
-    // POST Logout
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Logout()
+    public async Task<IActionResult> Logout()
     {
-        if (Request.Cookies.TryGetValue("SessionId", out var sessionId))
+        if (Request.Cookies.TryGetValue("refreshToken", out var refreshToken))
         {
-            _sessionService.DeleteSession(sessionId);
-            Response.Cookies.Delete("SessionId");
+            _sessionService.DeleteRefreshToken(refreshToken);
+            Response.Cookies.Delete("refreshToken");
         }
 
+        if (Request.Cookies.TryGetValue("accessToken", out var accessToken))
+        {
+            Response.Cookies.Delete("accessToken");
+        }
+
+        await _signInManager.SignOutAsync();
+
         return RedirectToAction("Login");
+    }
+
+    [HttpPost]
+    public IActionResult Refresh()
+    {
+        if (!Request.Cookies.TryGetValue("refreshToken", out var refreshToken))
+            return Unauthorized();
+
+        var userId = _sessionService.GetUserIdByRefreshToken(refreshToken);
+        if (userId == null)
+            return Unauthorized();
+
+        var user = _userManager.FindByIdAsync(userId).Result;
+        if (user == null)
+            return Unauthorized();
+
+        var newAccessToken = _jwtService.GenerateAccessToken(user);
+        var newRefreshToken = _jwtService.GenerateRefreshToken();
+
+        _sessionService.DeleteRefreshToken(refreshToken);
+        _sessionService.SaveRefreshToken(newRefreshToken, user.Id.ToString(), _jwtService.GetRefreshTokenExpiry());
+
+        Response.Cookies.Append("accessToken", newAccessToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTime.UtcNow.AddMinutes(int.Parse(_config["JwtConfig:AccessTokenValidityMins"]))
+        });
+
+        Response.Cookies.Append("refreshToken", newRefreshToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTime.UtcNow.Add(_jwtService.GetRefreshTokenExpiry())
+        });
+
+        return Ok(new { AccessToken = newAccessToken });
     }
 }

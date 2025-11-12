@@ -6,28 +6,24 @@ namespace ReportSystem.Services
     {
         private readonly IDatabase _db;
 
-        // Constructor that sets the Redis connection dependency
         public SessionService(IConnectionMultiplexer redis)
         {
             _db = redis.GetDatabase();
         }
 
-        // Method to save a session with a given session ID, token, and expiry time
-        public void SaveSession(string sessionId, string token, TimeSpan expiry)
+        public void SaveRefreshToken(string refreshToken, string userId, TimeSpan expiry)
         {
-            _db.StringSet(sessionId, token, expiry);
+            _db.StringSet(refreshToken, userId, expiry);
         }
 
-        // Method to retrieve the token associated with a given session ID
-        public string? GetToken(string sessionId)
+        public string? GetUserIdByRefreshToken(string refreshToken)
         {
-            return _db.StringGet(sessionId);
+            return _db.StringGet(refreshToken);
         }
 
-        // Method to delete a session by its session ID
-        public void DeleteSession(string sessionId)
+        public void DeleteRefreshToken(string refreshToken)
         {
-            _db.KeyDelete(sessionId);
+            _db.KeyDelete(refreshToken);
         }
     }
 }

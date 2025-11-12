@@ -1,0 +1,10 @@
+﻿@{
+    ViewData["Title"] = "Access Denied";
+}
+
+<div class="container card my-5 px-4 pt-4 pb-3">
+    <h1 class="text-center bg-dark-subtle rounded-2 py-2 mb-2">403 - Access Denied</h1>
+    <hr />
+    <p>You are not permitted to visit this page: <span class="fw-bold">@ViewData["Path"]</span></p>
+    <a href="@Url.Action("Index", "Home")" class="btn btn-jade">Go to home</a>
+</div>

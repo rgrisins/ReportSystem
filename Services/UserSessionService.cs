@@ -4,55 +4,54 @@ namespace ReportSystem.Services
 {
     public class UserSessionService
     {
-        private readonly SessionService _sessionService;
+        private readonly string _cookieName = "accessToken";
 
-        // Constructor, that sets the SessionService dependency
-        public UserSessionService(SessionService sessionService)
-        {
-            _sessionService = sessionService;
-        }
-
-        // Method to check if the user is authenticated based on the session_id cookie
         public bool IsAuthenticated(HttpContext httpContext)
         {
-            var sessionId = httpContext.Request.Cookies["SessionId"];
-            if (string.IsNullOrEmpty(sessionId)) return false;
-            var token = _sessionService.GetToken(sessionId);
-            return token != null;
+            var token = GetAccessTokenFromCookie(httpContext);
+            if (string.IsNullOrEmpty(token))
+                return false;
+
+            try
+            {
+                var handler = new JwtSecurityTokenHandler();
+                var jwtToken = handler.ReadJwtToken(token);
+                return jwtToken.ValidTo > DateTime.UtcNow;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
-        // Method to get the username from the JWT token stored in the Redis session
         public string? GetUserName(HttpContext httpContext)
         {
-            var sessionId = httpContext.Request.Cookies["SessionId"];
-            if (string.IsNullOrEmpty(sessionId))
-                return null;
-
-            var token = _sessionService.GetToken(sessionId);
+            var token = GetAccessTokenFromCookie(httpContext);
             if (string.IsNullOrEmpty(token))
                 return null;
 
             var handler = new JwtSecurityTokenHandler();
             var jwtToken = handler.ReadJwtToken(token);
-
-            var userName = jwtToken.Claims.FirstOrDefault(c => c.Type == "unique_name")?.Value;
-
-            return userName;
+            return jwtToken.Claims.FirstOrDefault(c => c.Type == "unique_name")?.Value;
         }
 
-        // Method to get the user role from the JWT token stored in the Redis session
         public string? GetUserRole(HttpContext httpContext)
         {
-            var sessionId = httpContext.Request.Cookies["SessionId"];
-            if (string.IsNullOrEmpty(sessionId))
-                return null;
-            var token = _sessionService.GetToken(sessionId);
+            var token = GetAccessTokenFromCookie(httpContext);
             if (string.IsNullOrEmpty(token))
                 return null;
+
             var handler = new JwtSecurityTokenHandler();
             var jwtToken = handler.ReadJwtToken(token);
-            var userRole = jwtToken.Claims.FirstOrDefault(c => c.Type == "role")?.Value;
-            return userRole;
+            return jwtToken.Claims.FirstOrDefault(c => c.Type == "role")?.Value;
+        }
+
+        private string? GetAccessTokenFromCookie(HttpContext httpContext)
+        {
+            if (httpContext.Request.Cookies.TryGetValue(_cookieName, out var token))
+                return token;
+
+            return null;
         }
     }
 }

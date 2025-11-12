@@ -1,9 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ReportSystem.Models;
 
 namespace ReportSystem.Data
 {
-    public class ReportSystemContext : DbContext
+    public class ReportSystemContext : IdentityDbContext<User>
     {
         public ReportSystemContext(DbContextOptions<ReportSystemContext> options)
             : base(options)
@@ -11,7 +12,6 @@ namespace ReportSystem.Data
         }
 
         public DbSet<Report> Report { get; set; } = default!;
-        public DbSet<User> User { get; set; } = default!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -25,7 +25,7 @@ namespace ReportSystem.Data
                 .HasConversion<string>();
 
             modelBuilder.Entity<User>()
-                .Property(r => r.Role)
+                .Property(u => u.Role)
                 .HasConversion<string>();
 
             base.OnModelCreating(modelBuilder);
