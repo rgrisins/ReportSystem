@@ -33,15 +33,13 @@
                         <label class="form-check-label" for="themeToggle">Light Mode</label>
                     </div>
 
-                    @inject ReportSystem.Services.UserSessionService UserSessionService
-
                     <ul class="navbar-nav fs-6 border-start ps-3">
-                        @if (UserSessionService.IsAuthenticated(Context))
+                        @if (User.Identity?.IsAuthenticated ?? false)
                         {
                             <li class="nav-item">
                                 <form asp-area="" asp-controller="Auth" asp-action="Logout" method="post" class="d-inline">
                                     <button type="submit" class="btn btn-link nav-link p-0">
-                                        Logout (@UserSessionService.GetUserName(Context))
+                                        Logout (@User.Identity.Name)
                                     </button>
                                 </form>
                             </li>

@@ -147,43 +147,4 @@ public class AuthController : Controller
 
         return RedirectToAction("Login");
     }
-
-    [HttpPost]
-    public IActionResult Refresh()
-    {
-        if (!Request.Cookies.TryGetValue("refreshToken", out var refreshToken))
-            return Unauthorized();
-
-        var userId = _sessionService.GetUserIdByRefreshToken(refreshToken);
-        if (userId == null)
-            return Unauthorized();
-
-        var user = _userManager.FindByIdAsync(userId).Result;
-        if (user == null)
-            return Unauthorized();
-
-        var newAccessToken = _jwtService.GenerateAccessToken(user);
-        var newRefreshToken = _jwtService.GenerateRefreshToken();
-
-        _sessionService.DeleteRefreshToken(refreshToken);
-        _sessionService.SaveRefreshToken(newRefreshToken, user.Id.ToString(), _jwtService.GetRefreshTokenExpiry());
-
-        Response.Cookies.Append("accessToken", newAccessToken, new CookieOptions
-        {
-            HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.Strict,
-            Expires = DateTime.UtcNow.AddMinutes(int.Parse(_config["JwtConfig:AccessTokenValidityMins"]))
-        });
-
-        Response.Cookies.Append("refreshToken", newRefreshToken, new CookieOptions
-        {
-            HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.Strict,
-            Expires = DateTime.UtcNow.Add(_jwtService.GetRefreshTokenExpiry())
-        });
-
-        return Ok(new { AccessToken = newAccessToken });
-    }
 }

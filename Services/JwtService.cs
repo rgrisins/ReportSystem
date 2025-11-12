@@ -24,9 +24,9 @@ namespace ReportSystem.Services
 
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.UserName ?? ""),
-                new Claim(ClaimTypes.Role, user.Role.ToString())
+                new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new(ClaimTypes.Name, user.UserName ?? ""),
+                new(ClaimTypes.Role, user.Role.ToString())
             };
 
             var tokenDescriptor = new SecurityTokenDescriptor
@@ -43,7 +43,6 @@ namespace ReportSystem.Services
             return tokenHandler.WriteToken(token);
         }
 
-        // 
         public string GenerateRefreshToken()
         {
             return Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));

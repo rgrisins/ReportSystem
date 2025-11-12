@@ -21,7 +21,6 @@ builder.Services.AddDbContext<ReportSystemContext>(options =>
 builder.Services.AddSingleton<IConnectionMultiplexer>(muxer);
 builder.Services.AddSingleton<JwtService>();
 builder.Services.AddSingleton<SessionService>();
-builder.Services.AddScoped<UserSessionService>();
 
 builder.Services.AddDefaultIdentity<User>(options =>
 {
@@ -84,6 +83,8 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseRouting();
+
+app.UseMiddleware<ReportSystem.Middlewares.TokenRefreshMiddleware>();
 
 app.Use(async (context, next) =>
 {
