@@ -6,6 +6,7 @@ using ReportSystem.Data;
 using ReportSystem.Models;
 using ReportSystem.Services;
 using StackExchange.Redis;
+using System.Security.Claims;
 using System.Text;
 
 // Initialize Redis connection
@@ -34,7 +35,12 @@ builder.Services.AddDefaultIdentity<User>(options =>
 builder.Services.AddControllersWithViews();
 
 // Configure JWT authentication
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -45,9 +51,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = builder.Configuration["JwtConfig:Issuer"],
             ValidAudience = builder.Configuration["JwtConfig:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["JwtConfig:Key"])
+              Encoding.UTF8.GetBytes(builder.Configuration["JwtConfig:Key"] ?? string.Empty)
             ),
-            ClockSkew = TimeSpan.Zero
+            ClockSkew = TimeSpan.Zero,
+            RoleClaimType = ClaimTypes.Role,
+            NameClaimType = ClaimTypes.Name
         };
     });
 
@@ -74,33 +82,19 @@ if (!app.Environment.IsDevelopment())
 
 // Middleware configuration
 app.UseHttpsRedirection();
+
 app.UseRouting();
-app.UseAuthentication();
 
 app.Use(async (context, next) =>
 {
-    if (context.User?.Identity?.IsAuthenticated != true)
-    {
-        var token = context.Request.Cookies["accessToken"];
-        if (!string.IsNullOrEmpty(token))
-        {
-            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
-            var jwt = handler.ReadJwtToken(token);
-
-            var claims = jwt.Claims.Select(c =>
-            {
-                if (c.Type == "role")
-                    return new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, c.Value);
-                return new System.Security.Claims.Claim(c.Type, c.Value);
-            });
-
-            var identity = new System.Security.Claims.ClaimsIdentity(claims, JwtBearerDefaults.AuthenticationScheme);
-            context.User = new System.Security.Claims.ClaimsPrincipal(identity);
-        }
-    }
+    var token = context.Request.Cookies["accessToken"];
+    if (!string.IsNullOrEmpty(token) && !context.Request.Headers.ContainsKey("Authorization"))
+        context.Request.Headers.Authorization = $"Bearer {token}";
 
     await next();
 });
+
+app.UseAuthentication();
 
 app.UseStatusCodePages(context =>
 {
@@ -123,6 +117,7 @@ app.UseStatusCodePages(context =>
 });
 
 app.UseAuthorization();
+
 app.MapStaticAssets();
 
 app.MapControllerRoute(

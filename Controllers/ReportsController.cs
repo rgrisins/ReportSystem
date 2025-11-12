@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using ReportSystem.Data;
 using ReportSystem.Enums;
 using ReportSystem.Models;
-using ReportSystem.Services;
 
 
 namespace ReportSystem.Controllers
@@ -13,16 +12,15 @@ namespace ReportSystem.Controllers
     public class ReportsController : Controller
     {
         private readonly ReportSystemContext _context;
-        private readonly SessionService _sessionService;
 
         // Constructor that sets the ReportSystemContext and SessionService dependencies
-        public ReportsController(ReportSystemContext context, SessionService sessionService)
+        public ReportsController(ReportSystemContext context)
         {
             _context = context;
-            _sessionService = sessionService;
         }
 
         // GET: Reports
+        [Authorize]
         public async Task<IActionResult> Index(string importanceRating, string reportStatus, string searchString, DateTime? dateFrom, DateTime? dateTo)
         {
             var reports = FilterReportsByDate(FilterReportsByImportance(FilterReportsByStatus(SearchReports(searchString), reportStatus), importanceRating), dateFrom, dateTo);
