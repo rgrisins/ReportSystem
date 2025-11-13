@@ -7,7 +7,7 @@
 <div class="container card my-5 px-4 pt-4 pb-3">
     <h1 class="text-center bg-dark-subtle rounded-2 py-2 mb-1">REPORTS</h1>
     <hr/>
-    <div class="d-flex flex-row flex-wrap align-items-center gap-4 mb-3">
+    <div class="d-flex flex-row flex-wrap align-items-center gap-4">
         @if (User.IsInRole("Admin"))
         {
             <div>
@@ -25,6 +25,7 @@
             </ul>
         </div>
     </div>
+    <hr/>
     <form asp-controller="Reports" asp-action="Index" method="get" class="align-content-center d-flex">
         <p class="align-content-center d-flex p-0 m-0 w-100">
 

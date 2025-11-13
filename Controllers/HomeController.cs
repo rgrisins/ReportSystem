@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using ReportSystem.Models;
 using System.Diagnostics;
@@ -33,17 +32,8 @@ namespace ReportSystem.Controllers
         // Handle 404 Not Found errors
         public IActionResult NotFoundPage()
         {
-            var feature = HttpContext.Features.Get<IStatusCodeReExecuteFeature>();
-
-            if (feature != null)
-            {
-                ViewData["Path"] = feature.OriginalPath;
-            }
-            else
-            {
-                ViewData["Path"] = HttpContext.Request.Path;
-            }
-
+            var originalPath = HttpContext.Request.Query["originalPath"].FirstOrDefault();
+            ViewData["Path"] = originalPath;
             return View("NotFound");
         }
 

@@ -97,24 +97,26 @@ app.Use(async (context, next) =>
 
 app.UseAuthentication();
 
-app.UseStatusCodePages(context =>
+app.UseStatusCodePages(async context =>
 {
-    var response = context.HttpContext.Response;
+    var http = context.HttpContext;
+    var status = http.Response.StatusCode;
+    var originalPath = Uri.EscapeDataString(http.Request.Path + http.Request.QueryString);
 
-    if (response.StatusCode == 401)
+    switch (status)
     {
-        context.HttpContext.Response.Redirect("/Auth/Login");
+        case 401:
+            http.Response.Redirect("/Auth/Login");
+            break;
+
+        case 403:
+            http.Response.Redirect($"/Home/ForbiddenPage?originalPath={originalPath}");
+            break;
+
+        case 404:
+            http.Response.Redirect($"/Home/NotFoundPage?originalPath={originalPath}");
+            break;
     }
-    else if (response.StatusCode == 403)
-    {
-        var originalPath = context.HttpContext.Request.Path;
-        context.HttpContext.Response.Redirect($"/Home/ForbiddenPage?originalPath={originalPath}");
-    }
-    else if (response.StatusCode == 404)
-    {
-        context.HttpContext.Response.Redirect("/Home/NotFoundPage");
-    }
-    return Task.CompletedTask;
 });
 
 app.UseAuthorization();
