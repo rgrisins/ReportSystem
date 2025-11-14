@@ -45,7 +45,7 @@
     </div>
     <hr/>
     <div>
-        @if (User.IsInRole("Admin"))
+        @if (User.IsInRole("Admin") || User.IsInRole("Editor"))
         {
             <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-cadet-blue me-3">Edit</a>
         }

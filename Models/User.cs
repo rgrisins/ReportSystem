@@ -14,7 +14,7 @@ namespace ReportSystem.Models
 
         [Required]
         [EmailAddress]
-        public string? Email { get; set; }
+        public override string? Email { get; set; }
 
         [Display(Name = "Creation Date")]
         [DataType(DataType.Date)]

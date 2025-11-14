@@ -19,17 +19,20 @@ namespace ReportSystem.Controllers
         }
 
         // GET: Admin
-        public IActionResult Index(string userRole, string searchString)
+        public IActionResult Index(string userRole, string searchString, DateTime? dateFrom, DateTime? dateTo)
         {
-            var users = SearchUsers(FilterUsersByRole(GetUsers(), userRole), searchString);
+            var filteredUsers = FilterUsersByDate(SearchUsers(FilterUsersByRole(GetUsers(), userRole), searchString), dateFrom, dateTo);
 
             var viewModel = new UserViewModel
             {
-                Users = users.ToList(),
+                Users = filteredUsers.ToList(),
                 Roles = new SelectList(Enum.GetValues(typeof(UserRole))),
-                RoleCounts = GetRoleCounts(),
-                TotalCount = GetTotalUserCount(),
-                UserRole = userRole
+                RoleCounts = GetRoleCounts(filteredUsers),
+                TotalCount = GetFilteredUserCount(filteredUsers),
+                UserRole = userRole,
+                SearchString = searchString,
+                DateFrom = dateFrom,
+                DateTo = dateTo
             };
 
             return View(viewModel);
@@ -65,7 +68,6 @@ namespace ReportSystem.Controllers
 
             if (id == currentUserId)
             {
-                TempData["ErrorMessage"] = "You cannot delete your own account.";
                 return RedirectToAction(nameof(Index));
             }
 
@@ -101,7 +103,7 @@ namespace ReportSystem.Controllers
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(string id, [Bind("Id,UserName,Email,Role")] User editedUser)
+        public async Task<IActionResult> Edit(string id, [Bind("Id,UserName,Email,Role,CreationDate")] User editedUser)
         {
             if (id != editedUser.Id)
                 return NotFound();
@@ -122,6 +124,8 @@ namespace ReportSystem.Controllers
                     {
                         user.Role = editedUser.Role;
                     }
+
+                    user.CreationDate = editedUser.CreationDate;
 
                     var result = await _userManager.UpdateAsync(user);
                     if (result.Succeeded)
@@ -150,7 +154,7 @@ namespace ReportSystem.Controllers
 
         public IQueryable<User> GetUsers()
         {
-            return _userManager.Users.AsQueryable();
+            return _userManager.Users.OrderBy(u => u.UserName);
         }
 
         private IQueryable<User> FilterUsersByRole(IQueryable<User> users, string role)
@@ -158,6 +162,21 @@ namespace ReportSystem.Controllers
             if (string.IsNullOrEmpty(role))
                 return users;
             return users.Where(u => u.Role.ToString() == role);
+        }
+
+        private IQueryable<User> FilterUsersByDate(IQueryable<User> users, DateTime? dateFrom, DateTime? dateTo)
+        {
+            if (dateFrom.HasValue)
+            {
+                users = users.Where(u => u.CreationDate >= dateFrom.Value);
+            }
+
+            if (dateTo.HasValue)
+            {
+                users = users.Where(u => u.CreationDate <= dateTo.Value);
+            }
+
+            return users;
         }
 
         private IQueryable<User> SearchUsers(IQueryable<User> users, string searchString)
@@ -172,17 +191,18 @@ namespace ReportSystem.Controllers
                 u.Email.ToLower().Contains(searchString));
         }
 
-        private int GetTotalUserCount()
+        private int GetFilteredUserCount(IQueryable<User> users)
         {
-            return _userManager.Users.Count();
+            return users.Count();
         }
 
-        private Dictionary<UserRole, int> GetRoleCounts()
+
+        private Dictionary<UserRole, int> GetRoleCounts(IQueryable<User> users)
         {
             var roleCounts = new Dictionary<UserRole, int>();
             foreach (UserRole status in Enum.GetValues(typeof(UserRole)))
             {
-                roleCounts[status] = _userManager.Users.Count(u => u.Role == status);
+                roleCounts[status] = users.Count(u => u.Role == status);
             }
             return roleCounts;
         }

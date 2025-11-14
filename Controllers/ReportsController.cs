@@ -30,8 +30,8 @@ namespace ReportSystem.Controllers
                 Statuses = new SelectList(Enum.GetValues(typeof(ReportStatus))),
                 Ratings = new SelectList(Enum.GetValues(typeof(ImportanceRating))),
                 Reports = await reports.ToListAsync(),
-                TotalCount = GetTotalReportCount(),
-                StatusCounts = GetStatusCounts(),
+                TotalCount = GetFilteredReportCount(reports),
+                StatusCounts = GetStatusCounts(reports),
                 DateFrom = dateFrom,
                 DateTo = dateTo
             };
@@ -46,14 +46,14 @@ namespace ReportSystem.Controllers
         }
 
         // GET: Reports/Create
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Editor")]
         public IActionResult Create()
         {
             return View();
         }
 
         // POST: Reports/Create
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Editor")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Title,ReportDate,Description,Status,ImportanceRating")] Report report)
@@ -68,14 +68,14 @@ namespace ReportSystem.Controllers
         }
 
         // GET: Reports/Edit/5
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Editor")]
         public async Task<IActionResult> Edit(int? id)
         {
             return await GetReportViewById(id);
         }
 
         // POST: Reports/Edit/5
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Editor")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Title,ReportDate,Description,Status,ImportanceRating")] Report report)
@@ -100,7 +100,7 @@ namespace ReportSystem.Controllers
         }
 
         // GET: Reports/Delete/5
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Editor")]
         public async Task<IActionResult> Delete(int? id)
         {
             return await GetReportViewById(id);
@@ -108,7 +108,7 @@ namespace ReportSystem.Controllers
 
         // POST: Reports/Delete/5
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Editor")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id, bool notUsed)
         {
@@ -199,21 +199,22 @@ namespace ReportSystem.Controllers
             }
         }
 
-        // Method to get total report count
-        private int GetTotalReportCount()
+        // Method to get filtered report count
+        private int GetFilteredReportCount(IQueryable<Report> reports)
         {
-            return _context.Report.Count();
+            return reports.Count();
         }
 
         // Method to get counts of reports by status
-        private Dictionary<ReportStatus, int> GetStatusCounts()
+        private Dictionary<ReportStatus, int> GetStatusCounts(IQueryable<Report> reports)
         {
             var statusCounts = new Dictionary<ReportStatus, int>();
+
             foreach (ReportStatus status in Enum.GetValues(typeof(ReportStatus)))
             {
-                int count = _context.Report.Count(r => r.Status == status);
-                statusCounts[status] = count;
+                statusCounts[status] = reports.Count(r => r.Status == status);
             }
+
             return statusCounts;
         }
     }
