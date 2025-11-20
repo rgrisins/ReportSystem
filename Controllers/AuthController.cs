@@ -61,22 +61,7 @@ public class AuthController : Controller
         var accessToken = _jwtService.GenerateAccessToken(user);
         var refreshToken = _jwtService.GenerateRefreshToken();
         _sessionService.SaveRefreshToken(refreshToken, user.Id.ToString(), _jwtService.GetRefreshTokenExpiry());
-
-        Response.Cookies.Append("accessToken", accessToken, new CookieOptions
-        {
-            HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.Strict,
-            Expires = DateTime.UtcNow.AddMinutes(int.Parse(_config["JwtConfig:AccessTokenValidityMins"]))
-        });
-
-        Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
-        {
-            HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.Strict,
-            Expires = DateTime.UtcNow.Add(_jwtService.GetRefreshTokenExpiry())
-        });
+        _jwtService.GenerateAuthCookies(HttpContext, user, refreshToken);
 
         return RedirectToAction("Index", "Home");
     }
@@ -108,22 +93,7 @@ public class AuthController : Controller
         var accessToken = _jwtService.GenerateAccessToken(user);
         var refreshToken = _jwtService.GenerateRefreshToken();
         _sessionService.SaveRefreshToken(refreshToken, user.Id.ToString(), _jwtService.GetRefreshTokenExpiry());
-
-        Response.Cookies.Append("accessToken", accessToken, new CookieOptions
-        {
-            HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.Strict,
-            Expires = DateTime.UtcNow.AddMinutes(int.Parse(_config["JwtConfig:AccessTokenValidityMins"]))
-        });
-
-        Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
-        {
-            HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.Strict,
-            Expires = DateTime.UtcNow.Add(_jwtService.GetRefreshTokenExpiry())
-        });
+        _jwtService.GenerateAuthCookies(HttpContext, user, refreshToken);
 
         return RedirectToAction("Index", "Home");
     }

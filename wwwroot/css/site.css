@@ -75,3 +75,7 @@ body {
         transform: translateY(0);
     }
 }
+
+.navbar-nav .btn-link.nav-link {
+  border-radius: 0;
+}

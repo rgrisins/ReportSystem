@@ -1,0 +1,69 @@
+﻿@model ReportSystem.Models.UserProfileView
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="container card my-5 px-4 pt-4 pb-4">
+    <h2 class="text-center bg-dark-subtle rounded-2 py-2 mb-3">MY PROFILE</h2>
+    <hr />
+    <div asp-validation-summary="ModelOnly" class="text-danger border border-danger rounded p-2 mb-3 list-unstyled"></div>
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <h5 class="fw-bold">Account Info</h5>
+            <form id="profileForm" asp-action="UpdateProfile" method="post" novalidate class="h-100 d-flex flex-column">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+                <div class="mb-3">
+                    <label asp-for="UserName" class="form-label"></label>
+                    <input asp-for="UserName" class="form-control" />
+                    <span asp-validation-for="UserName" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label"></label>
+                    <input asp-for="Email" class="form-control" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+                <div class="mb-2">
+                    <strong>Role:</strong> @Model.Role
+                </div>
+                <div class="mb-3">
+                    <strong>Member Since:</strong> @Model.CreationDate.ToString("yyyy-MM-dd")
+                </div>
+
+                <div class="mt-auto pt-2">
+                    <button type="submit" class="btn btn-jade w-100">Save Changes</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <h5 class="fw-bold">Change Password</h5>
+            <form id="passwordForm" asp-action="ChangePassword" method="post" novalidate class="h-100 d-flex flex-column">
+                @Html.AntiForgeryToken()
+                <div class="mb-3">
+                    <label asp-for="CurrentPassword" class="form-label"></label>
+                    <input asp-for="CurrentPassword" class="form-control" />
+                    <span asp-validation-for="CurrentPassword" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="NewPassword" class="form-label"></label>
+                    <input asp-for="NewPassword" class="form-control" />
+                    <span asp-validation-for="NewPassword" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="ConfirmPassword" class="form-label"></label>
+                    <input asp-for="ConfirmPassword" class="form-control" />
+                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                </div>
+
+                <div class="mt-auto pt-2">
+                    <button type="submit" class="btn btn-cadet-blue w-100">Change Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

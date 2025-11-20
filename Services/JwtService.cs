@@ -16,7 +16,7 @@ namespace ReportSystem.Services
             _config = config;
         }
 
-        // Method to generate JWT access token
+        // Existing method (kept for backward compatibility)
         public string GenerateAccessToken(User user)
         {
             var key = Encoding.UTF8.GetBytes(_config["JwtConfig:Key"]);
@@ -25,7 +25,7 @@ namespace ReportSystem.Services
             var claims = new List<Claim>
             {
                 new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new(ClaimTypes.Name, user.UserName ?? ""),
+                new(ClaimTypes.Name, user.UserName ?? string.Empty),
                 new(ClaimTypes.Role, user.Role.ToString())
             };
 
@@ -38,9 +38,46 @@ namespace ReportSystem.Services
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
 
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            return tokenHandler.WriteToken(token);
+            var handler = new JwtSecurityTokenHandler();
+            var token = handler.CreateToken(tokenDescriptor);
+            return handler.WriteToken(token);
+        }
+
+        public void GenerateAccessTokenCookie(HttpContext httpContext, User user)
+        {
+            var token = GenerateAccessToken(user);
+            var minutes = int.Parse(_config["JwtConfig:AccessTokenValidityMins"]);
+            httpContext.Response.Cookies.Append("accessToken", token, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTime.UtcNow.AddMinutes(minutes)
+            });
+        }
+
+        public (string accessToken, string refreshToken) GenerateAuthCookies(HttpContext httpContext, User user, string refreshTokenValue = null!)
+        {
+            var accessToken = GenerateAccessToken(user);
+            var minutes = int.Parse(_config["JwtConfig:AccessTokenValidityMins"]);
+            httpContext.Response.Cookies.Append("accessToken", accessToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTime.UtcNow.AddMinutes(minutes)
+            });
+
+            var refreshToken = refreshTokenValue ?? GenerateRefreshToken();
+            httpContext.Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTime.UtcNow.Add(GetRefreshTokenExpiry())
+            });
+
+            return (accessToken, refreshToken);
         }
 
         public string GenerateRefreshToken()

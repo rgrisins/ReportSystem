@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ReportSystem.Enums;
 using ReportSystem.Models;
+using ReportSystem.Services;
 
 namespace ReportSystem.Controllers
 {
@@ -12,10 +13,14 @@ namespace ReportSystem.Controllers
     public class AdminController : Controller
     {
         private readonly UserManager<User> _userManager;
+        private readonly JwtService _jwtService;
+        private readonly SessionService _sessionService;
 
-        public AdminController(UserManager<User> userManager)
+        public AdminController(UserManager<User> userManager, JwtService jwtService, SessionService sessionService)
         {
             _userManager = userManager;
+            _jwtService = jwtService;
+            _sessionService = sessionService;
         }
 
         // GET: Admin
@@ -130,6 +135,17 @@ namespace ReportSystem.Controllers
                     var result = await _userManager.UpdateAsync(user);
                     if (result.Succeeded)
                     {
+                        if (id == currentUserId)
+                        {
+                            var oldRefresh = Request.Cookies["refreshToken"];
+                            if (!string.IsNullOrEmpty(oldRefresh))
+                                _sessionService.DeleteRefreshToken(oldRefresh);
+
+                            var newRefresh = _jwtService.GenerateRefreshToken();
+                            _sessionService.SaveRefreshToken(newRefresh, user.Id, _jwtService.GetRefreshTokenExpiry());
+
+                            _jwtService.GenerateAuthCookies(HttpContext, user, newRefresh);
+                        }
                         return RedirectToAction(nameof(Index));
                     }
 
