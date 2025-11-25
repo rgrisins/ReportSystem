@@ -11,10 +11,10 @@ namespace ReportSystem.Controllers
 {
     public class ReportsController : Controller
     {
-        private readonly ReportSystemContext _context;
+        private readonly ReportSystemDbContext _context;
 
         // Constructor that sets the ReportSystemContext and SessionService dependencies
-        public ReportsController(ReportSystemContext context)
+        public ReportsController(ReportSystemDbContext context)
         {
             _context = context;
         }

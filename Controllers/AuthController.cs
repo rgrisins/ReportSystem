@@ -10,20 +10,17 @@ public class AuthController : Controller
     private readonly SignInManager<User> _signInManager;
     private readonly JwtService _jwtService;
     private readonly SessionService _sessionService;
-    private readonly IConfiguration _config;
 
     public AuthController(
         UserManager<User> userManager,
         SignInManager<User> signInManager,
         JwtService jwtService,
-        SessionService sessionService,
-        IConfiguration config)
+        SessionService sessionService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _jwtService = jwtService;
         _sessionService = sessionService;
-        _config = config;
     }
 
     [HttpGet]
@@ -58,10 +55,7 @@ public class AuthController : Controller
             return View(request);
         }
 
-        var accessToken = _jwtService.GenerateAccessToken(user);
-        var refreshToken = _jwtService.GenerateRefreshToken();
-        _sessionService.SaveRefreshToken(refreshToken, user.Id.ToString(), _jwtService.GetRefreshTokenExpiry());
-        _jwtService.GenerateAuthCookies(HttpContext, user, refreshToken);
+        _jwtService.GenerateAuthCookies(HttpContext, user);
 
         return RedirectToAction("Index", "Home");
     }
@@ -90,10 +84,7 @@ public class AuthController : Controller
             return View(request);
         }
 
-        var accessToken = _jwtService.GenerateAccessToken(user);
-        var refreshToken = _jwtService.GenerateRefreshToken();
-        _sessionService.SaveRefreshToken(refreshToken, user.Id.ToString(), _jwtService.GetRefreshTokenExpiry());
-        _jwtService.GenerateAuthCookies(HttpContext, user, refreshToken);
+        _jwtService.GenerateAuthCookies(HttpContext, user);
 
         return RedirectToAction("Index", "Home");
     }

@@ -4,9 +4,9 @@ using ReportSystem.Models;
 
 namespace ReportSystem.Data
 {
-    public class ReportSystemContext : IdentityDbContext<User>
+    public class ReportSystemDbContext : IdentityDbContext<User>
     {
-        public ReportSystemContext(DbContextOptions<ReportSystemContext> options)
+        public ReportSystemDbContext(DbContextOptions<ReportSystemDbContext> options)
             : base(options)
         {
         }

@@ -10,13 +10,14 @@ namespace ReportSystem.Services
     public class JwtService
     {
         private readonly IConfiguration _config;
+        private readonly SessionService _sessionService;
 
-        public JwtService(IConfiguration config)
+        public JwtService(IConfiguration config, SessionService sessionService)
         {
             _config = config;
+            _sessionService = sessionService;
         }
 
-        // Existing method (kept for backward compatibility)
         public string GenerateAccessToken(User user)
         {
             var key = Encoding.UTF8.GetBytes(_config["JwtConfig:Key"]);
@@ -56,7 +57,7 @@ namespace ReportSystem.Services
             });
         }
 
-        public (string accessToken, string refreshToken) GenerateAuthCookies(HttpContext httpContext, User user, string refreshTokenValue = null!)
+        public (string accessToken, string refreshToken) GenerateAuthCookies(HttpContext httpContext, User user, string oldRefreshToken = null!)
         {
             var accessToken = GenerateAccessToken(user);
             var minutes = int.Parse(_config["JwtConfig:AccessTokenValidityMins"]);
@@ -68,7 +69,14 @@ namespace ReportSystem.Services
                 Expires = DateTime.UtcNow.AddMinutes(minutes)
             });
 
-            var refreshToken = refreshTokenValue ?? GenerateRefreshToken();
+            if (!string.IsNullOrEmpty(oldRefreshToken))
+            {
+                _sessionService.DeleteRefreshToken(oldRefreshToken);
+            }
+
+            var refreshToken = GenerateRefreshToken();
+            _sessionService.SaveRefreshToken(refreshToken, user.Id, GetRefreshTokenExpiry());
+
             httpContext.Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
             {
                 HttpOnly = true,

@@ -14,8 +14,8 @@ var muxer = ConnectionMultiplexer.Connect("localhost");
 
 // Create the web application builder
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddDbContext<ReportSystemContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("ReportSystemContext") ?? throw new InvalidOperationException("Connection string 'ReportSystemContext' not found.")));
+builder.Services.AddDbContext<ReportSystemDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Register services for dependency injection
 builder.Services.AddSingleton<IConnectionMultiplexer>(muxer);
@@ -27,7 +27,7 @@ builder.Services.AddDefaultIdentity<User>(options =>
     options.SignIn.RequireConfirmedAccount = true;
 })
     .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<ReportSystemContext>()
+    .AddEntityFrameworkStores<ReportSystemDbContext>()
     .AddDefaultTokenProviders();
 
 // Add controllers with views support
@@ -68,7 +68,8 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-
+    var db = services.GetRequiredService<ReportSystemDbContext>();
+    await db.Database.MigrateAsync();
     await SeedData.Initialize(services);
 }
 

@@ -12,14 +12,12 @@ namespace ReportSystem.Controllers
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
         private readonly JwtService _jwtService;
-        private readonly SessionService _sessionService;
 
-        public ProfileController(UserManager<User> userManager, SignInManager<User> signInManager, JwtService jwtService, SessionService sessionService)
+        public ProfileController(UserManager<User> userManager, SignInManager<User> signInManager, JwtService jwtService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _jwtService = jwtService;
-            _sessionService = sessionService;
         }
 
         public async Task<IActionResult> Index()
@@ -72,13 +70,7 @@ namespace ReportSystem.Controllers
             await _signInManager.RefreshSignInAsync(user);
 
             var oldRefresh = Request.Cookies["refreshToken"];
-            if (!string.IsNullOrEmpty(oldRefresh))
-                _sessionService.DeleteRefreshToken(oldRefresh);
-
-            var newRefresh = _jwtService.GenerateRefreshToken();
-            _sessionService.SaveRefreshToken(newRefresh, user.Id, _jwtService.GetRefreshTokenExpiry());
-
-            _jwtService.GenerateAuthCookies(HttpContext, user, newRefresh);
+            _jwtService.GenerateAuthCookies(HttpContext, user, oldRefresh);
 
             return RedirectToAction(nameof(Index));
         }
@@ -106,13 +98,7 @@ namespace ReportSystem.Controllers
             await _signInManager.RefreshSignInAsync(user);
 
             var oldRefresh = Request.Cookies["refreshToken"];
-            if (!string.IsNullOrEmpty(oldRefresh))
-                _sessionService.DeleteRefreshToken(oldRefresh);
-
-            var newRefresh = _jwtService.GenerateRefreshToken();
-            _sessionService.SaveRefreshToken(newRefresh, user.Id, _jwtService.GetRefreshTokenExpiry());
-
-            _jwtService.GenerateAuthCookies(HttpContext, user, newRefresh);
+            _jwtService.GenerateAuthCookies(HttpContext, user, oldRefresh);
 
             return RedirectToAction(nameof(Index));
         }
