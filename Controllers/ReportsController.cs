@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using ReportSystem.Data;
 using ReportSystem.Enums;
 using ReportSystem.Models;
+using System.Security.Claims;
 
 
 namespace ReportSystem.Controllers
@@ -13,7 +14,7 @@ namespace ReportSystem.Controllers
     {
         private readonly ReportSystemDbContext _context;
 
-        // Constructor that sets the ReportSystemContext and SessionService dependencies
+        // Constructor that sets the ReportSystemContext
         public ReportsController(ReportSystemDbContext context)
         {
             _context = context;
@@ -23,7 +24,9 @@ namespace ReportSystem.Controllers
         [Authorize]
         public async Task<IActionResult> Index(string importanceRating, string reportStatus, string searchString, DateTime? dateFrom, DateTime? dateTo)
         {
-            var reports = FilterReportsByDate(FilterReportsByImportance(FilterReportsByStatus(SearchReports(searchString), reportStatus), importanceRating), dateFrom, dateTo);
+            var reports = FilterReportsByDate(FilterReportsByImportance(FilterReportsByStatus(SearchReports(searchString), reportStatus), importanceRating), dateFrom, dateTo)
+                .Include(r => r.CreatedByUser)
+                .Include(r => r.LastModifiedByUser);
 
             var reportStatusVM = new ReportStatusViewModel
             {
@@ -56,10 +59,17 @@ namespace ReportSystem.Controllers
         [Authorize(Roles = "Admin,Editor")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Title,ReportDate,Description,Status,ImportanceRating")] Report report)
+        public async Task<IActionResult> Create([Bind("Id,Title,Description,Status,ImportanceRating")] Report report)
         {
             if (ModelState.IsValid)
             {
+                var userName = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                report.ReportDate = DateTime.UtcNow;
+                report.CreatedBy = userName;
+                report.LastModifiedBy = userName;
+                report.LastModifiedAt = DateTime.UtcNow;
+
                 _context.Add(report);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
@@ -86,6 +96,17 @@ namespace ReportSystem.Controllers
             {
                 try
                 {
+                    var existingReport = await _context.Report.AsNoTracking().FirstOrDefaultAsync(r => r.Id == id);
+                    if (existingReport != null)
+                    {
+                        report.CreatedBy = existingReport.CreatedBy;
+                        report.ReportDate = existingReport.ReportDate;
+                    }
+
+                    var userName = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                    report.LastModifiedBy = userName;
+                    report.LastModifiedAt = DateTime.UtcNow;
+
                     _context.Update(report);
                     await _context.SaveChangesAsync();
                 }
@@ -183,7 +204,10 @@ namespace ReportSystem.Controllers
         {
             if (id == null) { return NotFound(); }
 
-            var report = await _context.Report.FirstOrDefaultAsync(m => m.Id == id);
+            var report = await _context.Report
+                .Include(r => r.CreatedByUser)
+                .Include(r => r.LastModifiedByUser)
+                .FirstOrDefaultAsync(m => m.Id == id);
 
             if (report == null) { return NotFound(); }
 

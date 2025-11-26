@@ -20,12 +20,6 @@
                 @Html.DisplayFor(model => model.Title)
             </dd>
             <dt class="col-sm-2">
-                @Html.DisplayNameFor(model => model.ReportDate)
-            </dt>
-            <dd class="col-sm-10">
-                @Html.DisplayFor(model => model.ReportDate)
-            </dd>
-            <dt class="col-sm-2">
                 @Html.DisplayNameFor(model => model.Description)
             </dt>
             <dd class="col-sm-10">
@@ -37,6 +31,31 @@
             <dd class="col-sm-10">
                 @Html.DisplayFor(model => model.Status)
             </dd>
+            <dt class="col-sm-2">
+                @Html.DisplayNameFor(model => model.ImportanceRating)
+            </dt>
+            <dd class="col-sm-10">
+                @Html.DisplayFor(model => model.ImportanceRating)
+            </dd>
+            <dt class="col-sm-2">
+                Created By
+            </dt>
+            <dd class="col-sm-10">
+                @(Model.CreatedByUser?.UserName ?? "Unknown")
+                <br />
+                <small class="text-muted">@Html.DisplayFor(model => model.ReportDate)</small>
+            </dd>
+            @if (Model.LastModifiedByUser != null)
+            {
+                <dt class="col-sm-2">
+                    Last Modified By
+                </dt>
+                <dd class="col-sm-10">
+                    @Model.LastModifiedByUser.UserName
+                    <br />
+                    <small class="text-muted">@Html.DisplayFor(model => model.LastModifiedAt)</small>
+                </dd>
+            }
         </dl>
         <hr/>
         <form asp-action="Delete">

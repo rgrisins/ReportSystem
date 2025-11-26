@@ -1,6 +1,7 @@
 ﻿using ReportSystem.Enums;
 using ReportSystem.Validation;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ReportSystem.Models
 {
@@ -28,5 +29,22 @@ namespace ReportSystem.Models
         [Display(Name = "Importance Rating")]
         [Required]
         public ImportanceRating ImportanceRating { get; set; }
+
+        [Display(Name = "Created By")]
+        public string? CreatedBy { get; set; }
+
+        [Display(Name = "Last Modified By")]
+        public string? LastModifiedBy { get; set; }
+
+        [ForeignKey("CreatedBy")]
+        public User? CreatedByUser { get; set; }
+
+        [ForeignKey("LastModifiedBy")]
+        public User? LastModifiedByUser { get; set; }
+
+        [Display(Name = "Last Modified At")]
+        [DataType(DataType.DateTime)]
+        [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}")]
+        public DateTime? LastModifiedAt { get; set; }
     }
 }

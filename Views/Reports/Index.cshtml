@@ -6,14 +6,14 @@
 
 <div class="container card my-5 px-4 pt-4 pb-3">
     <h1 class="text-center bg-dark-subtle rounded-2 py-2 mb-1">REPORTS</h1>
-    <hr/>
+    <hr />
     @if (User.IsInRole("Admin") || User.IsInRole("Editor"))
     {
         <div>
             <a asp-action="Create" class="btn btn-cadet-blue w-100">Create New</a>
         </div>
     }
-    <hr/>
+    <hr />
     <div class="d-flex flex-row flex-wrap align-items-center gap-4">
         <div class="fw-bold fs-5">
             Report count: <span class="badge bg-black">@Model.TotalCount</span>
@@ -31,7 +31,7 @@
             </ul>
         </div>
     </div>
-    <hr/>
+    <hr />
     <form asp-controller="Reports" asp-action="Index" method="get" class="align-content-center d-flex">
         <p class="align-content-center d-flex p-0 m-0 w-100">
 
@@ -57,7 +57,7 @@
                 <option value="">All</option>
             </select>
 
-            <input type="submit" value="Filter" class="btn btn-jade me-2"/>
+            <input type="submit" value="Filter" class="btn btn-jade me-2" />
             <a asp-action="Index" class="btn btn-danger">Clear</a>
         </p>
     </form>
@@ -71,9 +71,6 @@
                     @Html.DisplayNameFor(model => model.Reports![0].Title)
                 </th>
                 <th class="text-center align-middle">
-                    @Html.DisplayNameFor(model => model.Reports![0].ReportDate)
-                </th>
-                <th class="text-center align-middle">
                     @Html.DisplayNameFor(model => model.Reports![0].Description)
                 </th>
                 <th class="text-center align-middle">
@@ -82,39 +79,61 @@
                 <th class="text-center align-middle">
                     @Html.DisplayNameFor(model => model.Reports![0].ImportanceRating)
                 </th>
-                <th></th>
+                <th class="text-center align-middle">
+                    Created By
+                </th>
+                <th class="text-center align-middle">
+                    @Html.DisplayNameFor(model => model.Reports![0].ReportDate)
+                </th>
+                <th class="text-center align-middle">
+                    Last Modified
+                </th>
+                <th class="text-center align-middle">Actions</th>
             </tr>
         </thead>
         <tbody>
             @foreach (var item in Model.Reports!)
             {
-            <tr>
-                <td class="text-center align-middle">
-                    @Html.DisplayFor(modelItem => item.Title)
-                </td>
-                <td class="text-center align-middle">
-                    @Html.DisplayFor(modelItem => item.ReportDate)
-                </td>
-                <td class="align-middle">
-                    @Html.DisplayFor(modelItem => item.Description)
-                </td>
-                <td class="text-center align-middle">
-                    @Html.DisplayFor(modelItem => item.Status)
-                </td>
-                <td class="text-center align-middle">
-                    @Html.DisplayFor(modelItem => item.ImportanceRating)
-                </td>
-                <td class="d-flex flex-column flex-md-row flex-wrap align-items-center justify-content-center gap-2 w-100" style="min-width:0;">
-                    @if (User.IsInRole("Admin") || User.IsInRole("Editor"))
-                    {
-                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-cadet-blue">Edit</a>
-                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger">Delete</a>
-                    }
-
-                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-jade">Details</a>
-                </td>
-            </tr>
-    }
+                <tr>
+                    <td class="text-center align-middle">
+                        @Html.DisplayFor(modelItem => item.Title)
+                    </td>
+                    <td class="align-middle">
+                        @Html.DisplayFor(modelItem => item.Description)
+                    </td>
+                    <td class="text-center align-middle">
+                        @Html.DisplayFor(modelItem => item.Status)
+                    </td>
+                    <td class="text-center align-middle">
+                        @Html.DisplayFor(modelItem => item.ImportanceRating)
+                    </td>
+                    <td class="text-center align-middle">
+                        @(item.CreatedByUser?.UserName ?? "Unknown")
+                    </td>
+                    <td class="text-center align-middle">
+                        @item.ReportDate.ToString("d")
+                    </td>
+                    <td class="text-center align-middle">
+                        @if (item.LastModifiedByUser != null)
+                        {
+                            <div>@item.LastModifiedByUser.UserName</div>
+                            <small class="text-muted">@item.LastModifiedAt?.ToString("g")</small>
+                        }
+                        else
+                        {
+                            <span class="text-muted">-</span>
+                        }
+                    </td>
+                    <td class="text-center align-middle text-nowrap">
+                        @if (User.IsInRole("Admin") || User.IsInRole("Editor"))
+                        {
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-cadet-blue">Edit</a>
+                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Delete</a>
+                        }
+                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-jade">Details</a>
+                    </td>
+                </tr>
+            }
         </tbody>
     </table>
 </div>
