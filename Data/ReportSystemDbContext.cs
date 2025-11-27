@@ -12,6 +12,7 @@ namespace ReportSystem.Data
         }
 
         public DbSet<Report> Report { get; set; } = default!;
+        public DbSet<ReportAttachment> ReportAttachments { get; set; } = default!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -57,6 +57,22 @@
                 </dd>
             }
         </dl>
+
+        @if (Model.Attachments != null && Model.Attachments.Any())
+        {
+            <hr />
+            <h5 class="text-danger">Warning: The following attachments will also be deleted:</h5>
+            <ul>
+                @foreach (var attachment in Model.Attachments)
+                {
+                    <li>
+                        @attachment.FileName
+                        (@(attachment.FileSize / 1024.0 < 1 ? "<1KB" : Math.Round(attachment.FileSize / 1024.0) + "KB"))
+                    </li>
+                }
+            </ul>
+        }
+
         <hr/>
         <form asp-action="Delete">
             <input type="hidden" asp-for="Id" />

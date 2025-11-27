@@ -56,6 +56,44 @@
             }
         </dl>
     </div>
+
+    @if (Model.Attachments != null && Model.Attachments.Any())
+    {
+        <hr />
+        <h4 class="mb-3">Attachments</h4>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>File Name</th>
+                        <th>Size</th>
+                        <th>Uploaded By</th>
+                        <th>Uploaded At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var attachment in Model.Attachments)
+                    {
+                        <tr>
+                            <td>@attachment.FileName</td>
+                            <td>
+                                @(attachment.FileSize / 1024.0 < 1 ? "<1KB" : Math.Round(attachment.FileSize / 1024.0) + "KB")
+                            </td>
+                            <td>@(attachment.UploadedByUser?.UserName ?? "Unknown")</td>
+                            <td>@attachment.UploadedAt.ToString("g")</td>
+                            <td>
+                                <a asp-action="DownloadAttachment" asp-route-id="@attachment.Id" class="btn btn-sm btn-jade">
+                                    Download
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
     <hr/>
     <div>
         @if (User.IsInRole("Admin") || User.IsInRole("Editor"))

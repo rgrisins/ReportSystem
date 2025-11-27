@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using ReportSystem.Data;
 using ReportSystem.Enums;
 using ReportSystem.Models;
+using ReportSystem.Services;
 using System.Security.Claims;
 
 
@@ -13,11 +14,13 @@ namespace ReportSystem.Controllers
     public class ReportsController : Controller
     {
         private readonly ReportSystemDbContext _context;
+        private readonly FileService _fileService;
 
-        // Constructor that sets the ReportSystemContext
-        public ReportsController(ReportSystemDbContext context)
+        // Constructor that sets the ReportSystemContext and FileService
+        public ReportsController(ReportSystemDbContext context, FileService fileService)
         {
             _context = context;
+            _fileService = fileService;
         }
 
         // GET: Reports
@@ -59,19 +62,30 @@ namespace ReportSystem.Controllers
         [Authorize(Roles = "Admin,Editor")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Title,Description,Status,ImportanceRating")] Report report)
+        public async Task<IActionResult> Create([Bind("Id,Title,Description,Status,ImportanceRating")] Report report, List<IFormFile>? attachments)
         {
             if (ModelState.IsValid)
             {
-                var userName = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
                 report.ReportDate = DateTime.UtcNow;
-                report.CreatedBy = userName;
-                report.LastModifiedBy = userName;
+                report.CreatedBy = userId;
+                report.LastModifiedBy = userId;
                 report.LastModifiedAt = DateTime.UtcNow;
 
                 _context.Add(report);
                 await _context.SaveChangesAsync();
+
+                if (attachments != null && attachments.Any())
+                {
+                    var hasErrors = await SaveAttachmentsAsync(report.Id, attachments, userId);
+
+                    if (hasErrors)
+                    {
+                        return View(report);
+                    }
+                }
+
                 return RedirectToAction(nameof(Index));
             }
             return View(report);
@@ -81,14 +95,24 @@ namespace ReportSystem.Controllers
         [Authorize(Roles = "Admin,Editor")]
         public async Task<IActionResult> Edit(int? id)
         {
-            return await GetReportViewById(id);
+            if (id == null) { return NotFound(); }
+
+            var report = await _context.Report
+                .Include(r => r.Attachments)
+                .Include(r => r.CreatedByUser)
+                .Include(r => r.LastModifiedByUser)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (report == null) { return NotFound(); }
+
+            return View(report);
         }
 
         // POST: Reports/Edit/5
         [Authorize(Roles = "Admin,Editor")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,ReportDate,Description,Status,ImportanceRating")] Report report)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,ReportDate,Description,Status,ImportanceRating")] Report report, List<IFormFile>? attachments)
         {
             if (id != report.Id) { return NotFound(); }
 
@@ -103,28 +127,63 @@ namespace ReportSystem.Controllers
                         report.ReportDate = existingReport.ReportDate;
                     }
 
-                    var userName = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                    report.LastModifiedBy = userName;
+                    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                    report.LastModifiedBy = userId;
                     report.LastModifiedAt = DateTime.UtcNow;
 
                     _context.Update(report);
                     await _context.SaveChangesAsync();
+
+                    if (attachments != null && attachments.Any())
+                    {
+                        var hasErrors = await SaveAttachmentsAsync(id, attachments, userId);
+
+                        if (hasErrors)
+                        {
+                            var reportWithAttachments = await _context.Report
+                                .Include(r => r.Attachments).ThenInclude(a => a.UploadedByUser)
+                                .Include(r => r.CreatedByUser)
+                                .Include(r => r.LastModifiedByUser)
+                                .FirstOrDefaultAsync(r => r.Id == id);
+                            return View(reportWithAttachments);
+                        }
+                    }
+
+                    TempData["SuccessMessage"] = "Report updated successfully!";
+                    return RedirectToAction(nameof(Edit), new { id = id });
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (ReportExists(report.Id)) { return NotFound(); }
+                    if (!ReportExists(report.Id)) { return NotFound(); }
                     throw;
                 }
-                return RedirectToAction(nameof(Index));
             }
-            return View(report);
+
+            // Reload report with attachments if ModelState is invalid
+            var reportWithData = await _context.Report
+                .Include(r => r.Attachments).ThenInclude(a => a.UploadedByUser)
+                .Include(r => r.CreatedByUser)
+                .Include(r => r.LastModifiedByUser)
+                .FirstOrDefaultAsync(r => r.Id == id);
+
+            return View(reportWithData ?? report);
         }
 
         // GET: Reports/Delete/5
         [Authorize(Roles = "Admin,Editor")]
         public async Task<IActionResult> Delete(int? id)
         {
-            return await GetReportViewById(id);
+            if (id == null) { return NotFound(); }
+
+            var report = await _context.Report
+                .Include(r => r.Attachments)
+                .Include(r => r.CreatedByUser)
+                .Include(r => r.LastModifiedByUser)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (report == null) { return NotFound(); }
+
+            return View(report);
         }
 
         // POST: Reports/Delete/5
@@ -133,12 +192,97 @@ namespace ReportSystem.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id, bool notUsed)
         {
-            var report = await _context.Report.FindAsync(id);
+            var report = await _context.Report
+                .Include(r => r.Attachments)
+                .FirstOrDefaultAsync(r => r.Id == id);
 
-            RemoveReport(report);
+            if (report != null)
+            {
+                foreach (var attachment in report.Attachments)
+                {
+                    _fileService.DeleteFile(attachment.FilePath);
+                }
 
-            await _context.SaveChangesAsync();
+                RemoveReport(report);
+                await _context.SaveChangesAsync();
+            }
+
             return RedirectToAction(nameof(Index));
+        }
+
+        // DELETE: Reports/DeleteAttachment/5
+        [HttpPost]
+        [Authorize(Roles = "Admin,Editor")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteAttachment(int id)
+        {
+            var attachment = await _context.ReportAttachments.FindAsync(id);
+            if (attachment == null)
+                return NotFound();
+
+            var reportId = attachment.ReportId;
+
+            _fileService.DeleteFile(attachment.FilePath);
+
+            _context.ReportAttachments.Remove(attachment);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Edit), new { id = reportId });
+        }
+
+        // GET: Reports/DownloadAttachment/5
+        [HttpGet]
+        public async Task<IActionResult> DownloadAttachment(int id)
+        {
+            var attachment = await _context.ReportAttachments.FindAsync(id);
+            if (attachment == null)
+                return NotFound();
+
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", attachment.FilePath!);
+            if (!System.IO.File.Exists(filePath))
+                return NotFound();
+
+            var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
+            var contentType = _fileService.GetContentType(attachment.FileName!);
+
+            return File(fileBytes, contentType, attachment.FileName);
+        }
+
+        private async Task<bool> SaveAttachmentsAsync(int reportId, List<IFormFile> files, string? userId)
+        {
+            bool hasErrors = false;
+
+            foreach (var file in files)
+            {
+                var result = await _fileService.SaveFileAsync(file, reportId);
+                if (result.success)
+                {
+                    var attachment = new ReportAttachment
+                    {
+                        ReportId = reportId,
+                        FileName = file.FileName,
+                        FilePath = result.filePath,
+                        FileSize = file.Length,
+                        ContentType = file.ContentType,
+                        UploadedAt = DateTime.UtcNow,
+                        UploadedBy = userId
+                    };
+
+                    _context.ReportAttachments.Add(attachment);
+                }
+                else
+                {
+                    ModelState.AddModelError("attachments", result.error ?? "Error uploading file");
+                    hasErrors = true;
+                }
+            }
+
+            if (!hasErrors)
+            {
+                await _context.SaveChangesAsync();
+            }
+
+            return hasErrors;
         }
 
         private bool ReportExists(int id)
@@ -205,6 +349,7 @@ namespace ReportSystem.Controllers
             if (id == null) { return NotFound(); }
 
             var report = await _context.Report
+                .Include(r => r.Attachments).ThenInclude(a => a.UploadedByUser)
                 .Include(r => r.CreatedByUser)
                 .Include(r => r.LastModifiedByUser)
                 .FirstOrDefaultAsync(m => m.Id == id);

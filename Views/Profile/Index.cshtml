@@ -6,7 +6,17 @@
 <div class="container card my-5 px-4 pt-4 pb-4">
     <h2 class="text-center bg-dark-subtle rounded-2 py-2 mb-3">MY PROFILE</h2>
     <hr />
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <strong>Success!</strong> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
     <div asp-validation-summary="ModelOnly" class="text-danger border border-danger rounded p-2 mb-3 list-unstyled"></div>
+
     <div class="row">
         <div class="col-md-6 mb-4">
             <h5 class="fw-bold">Account Info</h5>

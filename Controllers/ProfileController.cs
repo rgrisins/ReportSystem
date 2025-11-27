@@ -72,6 +72,7 @@ namespace ReportSystem.Controllers
             var oldRefresh = Request.Cookies["refreshToken"];
             _jwtService.GenerateAuthCookies(HttpContext, user, oldRefresh);
 
+            TempData["SuccessMessage"] = "Profile updated successfully!";
             return RedirectToAction(nameof(Index));
         }
 
@@ -100,6 +101,7 @@ namespace ReportSystem.Controllers
             var oldRefresh = Request.Cookies["refreshToken"];
             _jwtService.GenerateAuthCookies(HttpContext, user, oldRefresh);
 
+            TempData["SuccessMessage"] = "Password changed successfully!";
             return RedirectToAction(nameof(Index));
         }
 

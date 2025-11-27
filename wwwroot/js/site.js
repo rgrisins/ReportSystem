@@ -5,7 +5,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     const themeToggle = document.getElementById('themeToggle');
     const html = document.documentElement;
-    // Ielādē saglabāto tēmu
+
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme) {
         html.setAttribute('data-bs-theme', savedTheme);

@@ -46,5 +46,7 @@ namespace ReportSystem.Models
         [DataType(DataType.DateTime)]
         [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}")]
         public DateTime? LastModifiedAt { get; set; }
+
+        public ICollection<ReportAttachment> Attachments { get; set; } = new List<ReportAttachment>();
     }
 }

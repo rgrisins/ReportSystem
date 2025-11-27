@@ -21,6 +21,7 @@ builder.Services.AddDbContext<ReportSystemDbContext>(options =>
 builder.Services.AddSingleton<IConnectionMultiplexer>(muxer);
 builder.Services.AddSingleton<JwtService>();
 builder.Services.AddSingleton<SessionService>();
+builder.Services.AddScoped<FileService>();
 
 builder.Services.AddDefaultIdentity<User>(options =>
 {
