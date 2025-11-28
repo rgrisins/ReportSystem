@@ -8,9 +8,9 @@ using ReportSystem.Models;
 using ReportSystem.Services;
 using System.Security.Claims;
 
-
 namespace ReportSystem.Controllers
 {
+    [Authorize(Roles = "Admin,Editor")]
     public class ReportsController : Controller
     {
         private readonly ReportSystemDbContext _context;
@@ -24,7 +24,6 @@ namespace ReportSystem.Controllers
         }
 
         // GET: Reports
-        [Authorize]
         public async Task<IActionResult> Index(string importanceRating, string reportStatus, string searchString, DateTime? dateFrom, DateTime? dateTo)
         {
             var reports = FilterReportsByDate(FilterReportsByImportance(FilterReportsByStatus(SearchReports(searchString), reportStatus), importanceRating), dateFrom, dateTo)
@@ -52,14 +51,12 @@ namespace ReportSystem.Controllers
         }
 
         // GET: Reports/Create
-        [Authorize(Roles = "Admin,Editor")]
         public IActionResult Create()
         {
             return View();
         }
 
         // POST: Reports/Create
-        [Authorize(Roles = "Admin,Editor")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Title,Description,Status,ImportanceRating")] Report report, List<IFormFile>? attachments)
@@ -92,7 +89,6 @@ namespace ReportSystem.Controllers
         }
 
         // GET: Reports/Edit/5
-        [Authorize(Roles = "Admin,Editor")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) { return NotFound(); }
@@ -109,7 +105,6 @@ namespace ReportSystem.Controllers
         }
 
         // POST: Reports/Edit/5
-        [Authorize(Roles = "Admin,Editor")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Title,ReportDate,Description,Status,ImportanceRating")] Report report, List<IFormFile>? attachments)
@@ -170,7 +165,6 @@ namespace ReportSystem.Controllers
         }
 
         // GET: Reports/Delete/5
-        [Authorize(Roles = "Admin,Editor")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) { return NotFound(); }
@@ -188,7 +182,6 @@ namespace ReportSystem.Controllers
 
         // POST: Reports/Delete/5
         [HttpPost]
-        [Authorize(Roles = "Admin,Editor")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id, bool notUsed)
         {
@@ -200,7 +193,7 @@ namespace ReportSystem.Controllers
             {
                 foreach (var attachment in report.Attachments)
                 {
-                    _fileService.DeleteFile(attachment.FilePath);
+                    await _fileService.DeleteFileAsync(attachment.FilePath);
                 }
 
                 RemoveReport(report);
@@ -212,7 +205,6 @@ namespace ReportSystem.Controllers
 
         // DELETE: Reports/DeleteAttachment/5
         [HttpPost]
-        [Authorize(Roles = "Admin,Editor")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteAttachment(int id)
         {
@@ -222,7 +214,7 @@ namespace ReportSystem.Controllers
 
             var reportId = attachment.ReportId;
 
-            _fileService.DeleteFile(attachment.FilePath);
+            await _fileService.DeleteFileAsync(attachment.FilePath);
 
             _context.ReportAttachments.Remove(attachment);
             await _context.SaveChangesAsync();
@@ -231,21 +223,17 @@ namespace ReportSystem.Controllers
         }
 
         // GET: Reports/DownloadAttachment/5
-        [HttpGet]
         public async Task<IActionResult> DownloadAttachment(int id)
         {
             var attachment = await _context.ReportAttachments.FindAsync(id);
             if (attachment == null)
                 return NotFound();
 
-            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", attachment.FilePath!);
-            if (!System.IO.File.Exists(filePath))
+            var result = await _fileService.DownloadFileAsync(attachment.FilePath!, attachment.FileName!);
+            if (!result.success || result.stream == null)
                 return NotFound();
 
-            var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
-            var contentType = _fileService.GetContentType(attachment.FileName!);
-
-            return File(fileBytes, contentType, attachment.FileName);
+            return File(result.stream, result.contentType ?? _fileService.GetContentType(attachment.FileName!), attachment.FileName);
         }
 
         private async Task<bool> SaveAttachmentsAsync(int reportId, List<IFormFile> files, string? userId)

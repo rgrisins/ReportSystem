@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Minio;
 using ReportSystem.Data;
 using ReportSystem.Models;
 using ReportSystem.Services;
@@ -9,19 +10,30 @@ using StackExchange.Redis;
 using System.Security.Claims;
 using System.Text;
 
-// Initialize Redis connection
-var muxer = ConnectionMultiplexer.Connect("localhost");
-
 // Create the web application builder
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ReportSystemDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Configure Redis connection
+var muxer = ConnectionMultiplexer.Connect(builder.Configuration["Redis:Connection"]);
+
+// Configure MinIO client
+var secure = builder.Configuration.GetValue("Minio:Secure", false);
+var minioBuilder = new MinioClient()
+    .WithEndpoint(builder.Configuration["Minio:Endpoint"])
+    .WithCredentials(builder.Configuration["Minio:Username"], builder.Configuration["Minio:Password"]);
+if (secure)
+    minioBuilder = minioBuilder.WithSSL();
+var minioClient = minioBuilder.Build();
+
 
 // Register services for dependency injection
 builder.Services.AddSingleton<IConnectionMultiplexer>(muxer);
 builder.Services.AddSingleton<JwtService>();
 builder.Services.AddSingleton<SessionService>();
 builder.Services.AddScoped<FileService>();
+builder.Services.AddSingleton<IMinioClient>(minioClient);
 
 builder.Services.AddDefaultIdentity<User>(options =>
 {
