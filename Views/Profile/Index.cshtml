@@ -21,7 +21,6 @@
         <div class="col-md-6 mb-4">
             <h5 class="fw-bold">Account Info</h5>
             <form id="profileForm" asp-action="UpdateProfile" method="post" novalidate class="h-100 d-flex flex-column">
-                @Html.AntiForgeryToken()
                 <input type="hidden" asp-for="Id" />
                 <div class="mb-3">
                     <label asp-for="UserName" class="form-label"></label>
@@ -49,7 +48,6 @@
         <div class="col-md-6 mb-4">
             <h5 class="fw-bold">Change Password</h5>
             <form id="passwordForm" asp-action="ChangePassword" method="post" novalidate class="h-100 d-flex flex-column">
-                @Html.AntiForgeryToken()
                 <div class="mb-3">
                     <label asp-for="CurrentPassword" class="form-label"></label>
                     <input asp-for="CurrentPassword" class="form-control" />

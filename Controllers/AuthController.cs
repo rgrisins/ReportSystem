@@ -30,7 +30,6 @@ public class AuthController : Controller
     public IActionResult Register() => View();
 
     [HttpPost]
-    [IgnoreAntiforgeryToken]
     public async Task<IActionResult> Register(RegisterRequest request)
     {
         if (!ModelState.IsValid)
@@ -60,8 +59,6 @@ public class AuthController : Controller
 
         _jwtService.GenerateAuthCookies(HttpContext, user);
 
-        ClearAntiforgeryCookies();
-
         return RedirectToAction("Index", "Home");
     }
 
@@ -69,7 +66,6 @@ public class AuthController : Controller
     public IActionResult Login() => View();
 
     [HttpPost]
-    [IgnoreAntiforgeryToken]
     public async Task<IActionResult> Login(LoginRequest request)
     {
         if (!ModelState.IsValid)
@@ -91,13 +87,10 @@ public class AuthController : Controller
 
         _jwtService.GenerateAuthCookies(HttpContext, user);
 
-        ClearAntiforgeryCookies();
-
         return RedirectToAction("Index", "Home");
     }
 
     [HttpPost]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
         if (Request.Cookies.TryGetValue("refreshToken", out var refreshToken))
@@ -113,20 +106,6 @@ public class AuthController : Controller
 
         await _signInManager.SignOutAsync();
 
-        ClearAntiforgeryCookies();
-
         return RedirectToAction("Login");
-    }
-
-    private void ClearAntiforgeryCookies()
-    {
-        var antiforgeryCookies = Request.Cookies.Keys
-            .Where(k => k.StartsWith(".AspNetCore.Antiforgery"))
-            .ToList();
-
-        foreach (var cookie in antiforgeryCookies)
-        {
-            Response.Cookies.Delete(cookie);
-        }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -27,11 +26,6 @@ var minioBuilder = new MinioClient()
 if (secure)
     minioBuilder = minioBuilder.WithSSL();
 var minioClient = minioBuilder.Build();
-
-// Configure Data Protection with Redis
-builder.Services.AddDataProtection()
-    .PersistKeysToStackExchangeRedis(muxer, "DataProtection-Keys")
-    .SetApplicationName("ReportSystem");
 
 // Register services for dependency injection
 builder.Services.AddSingleton<IConnectionMultiplexer>(muxer);
@@ -78,14 +72,6 @@ builder.Services.AddAuthentication(options =>
 
 // Add authorization services
 builder.Services.AddAuthorization();
-
-// Configure Antiforgery with new cookie name to avoid old key conflicts
-builder.Services.AddAntiforgery(options =>
-{
-    options.Cookie.Name = ".AspNetCore.Antiforgery.v2";
-    options.Cookie.SameSite = SameSiteMode.Lax;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.None;
-});
 
 // Build the web application
 var app = builder.Build();
