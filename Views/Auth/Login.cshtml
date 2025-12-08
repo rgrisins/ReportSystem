@@ -4,6 +4,7 @@
     <h2 class="text-center bg-dark-subtle rounded-2 py-2 mb-2">Login</h2>
     <hr />
     <form asp-action="Login" method="post">
+        @Html.AntiForgeryToken()
         <div asp-validation-summary="ModelOnly" class="text-danger border border-danger rounded p-2 mb-3 list-unstyled"></div>
         <div class="mb-3">
             <label asp-for="Email" class="form-label">Email</label>

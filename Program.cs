@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -27,6 +28,10 @@ if (secure)
     minioBuilder = minioBuilder.WithSSL();
 var minioClient = minioBuilder.Build();
 
+// Configure Data Protection with Redis
+builder.Services.AddDataProtection()
+    .PersistKeysToStackExchangeRedis(muxer, "DataProtection-Keys")
+    .SetApplicationName("ReportSystem");
 
 // Register services for dependency injection
 builder.Services.AddSingleton<IConnectionMultiplexer>(muxer);
@@ -48,11 +53,11 @@ builder.Services.AddControllersWithViews();
 
 // Configure JWT authentication
 builder.Services.AddAuthentication(options =>
-    {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-    })
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+})
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
