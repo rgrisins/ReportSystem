@@ -79,3 +79,20 @@ body {
 .navbar-nav .btn-link.nav-link {
   border-radius: 0;
 }
+
+.hover-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.hover-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.hover-card i {
+    transition: transform 0.3s ease-in-out;
+}
+
+.hover-card:hover i {
+    transform: scale(1.1);
+}

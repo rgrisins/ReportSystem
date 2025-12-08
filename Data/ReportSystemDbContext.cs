@@ -13,6 +13,7 @@ namespace ReportSystem.Data
 
         public DbSet<Report> Report { get; set; } = default!;
         public DbSet<ReportAttachment> ReportAttachments { get; set; } = default!;
+        public DbSet<RoleRequest> RoleRequests { get; set; } = default!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -30,6 +31,19 @@ namespace ReportSystem.Data
                 .HasConversion<string>();
 
             base.OnModelCreating(modelBuilder);
+
+            // Configure relationships for RoleRequest
+            modelBuilder.Entity<RoleRequest>()
+                .HasOne(rr => rr.User)
+                .WithMany()
+                .HasForeignKey(rr => rr.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<RoleRequest>()
+                .HasOne(rr => rr.ReviewedByUser)
+                .WithMany()
+                .HasForeignKey(rr => rr.ReviewedBy)
+                .OnDelete(DeleteBehavior.SetNull);
         }
     }
 }

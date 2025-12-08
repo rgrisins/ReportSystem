@@ -15,6 +15,14 @@
         </div>
     }
 
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>Error!</strong> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
     <div asp-validation-summary="ModelOnly" class="text-danger border border-danger rounded p-2 mb-3 list-unstyled"></div>
 
     <div class="row">
@@ -38,6 +46,21 @@
                 <div class="mb-3">
                     <strong>Member Since:</strong> @Model.CreationDate.ToString("yyyy-MM-dd")
                 </div>
+
+                @if (Model.Role == "User" && !Model.HasPendingRoleRequest)
+                {
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-warning w-100" data-bs-toggle="modal" data-bs-target="#roleRequestModal">
+                            Request Editor Role
+                        </button>
+                    </div>
+                }
+                else if (Model.HasPendingRoleRequest)
+                {
+                    <div class="alert alert-info mb-3">
+                        <i class="bi bi-clock"></i> You have a pending Editor role request.
+                    </div>
+                }
 
                 <div class="mt-auto pt-2">
                     <button type="submit" class="btn btn-jade w-100">Save Changes</button>
@@ -66,6 +89,30 @@
 
                 <div class="mt-auto pt-2">
                     <button type="submit" class="btn btn-cadet-blue w-100">Change Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="roleRequestModal" tabindex="-1" aria-labelledby="roleRequestModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="RequestEditorRole" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="roleRequestModalLabel">Request Editor Role</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="reason" class="form-label">Please explain why you need Editor access:</label>
+                        <textarea class="form-control" id="reason" name="reason" rows="4" required minlength="10" 
+                                  placeholder="Minimum 10 characters..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-jade">Submit Request</button>
                 </div>
             </form>
         </div>

@@ -1,84 +1,43 @@
 ﻿@model ReportSystem.Models.UserViewModel
 @using System.Security.Claims
 @{
-    ViewData["Title"] = "Users";
+    ViewData["Title"] = "Admin Panel";
 }
-
-<div class="container card my-5 px-4 pt-4 pb-3">
-    <h1 class="text-center bg-dark-subtle rounded-2 py-2 mb-1">USERS</h1>
-    <hr />
-    <div class="d-flex flex-wrap align-items-center gap-4">
-        <div class="fw-bold fs-5">
-            User count: <span class="badge bg-black">@Model.TotalCount</span>
+<div class="container my-5">
+    <div class="card">
+        <div class="card-header">
+            <h1 class="text-center bg-dark-subtle rounded-2 py-3 mb-0">
+                <i class="fas fa-user-shield me-2"></i>Admin Panel
+            </h1>
         </div>
-        <div class="fw-bold fs-5">
-            By Role:
-            <ul class="list-unstyled d-flex flex-wrap gap-2 mb-0 mt-1">
-                @foreach (var roleCount in Model.RoleCounts)
-                {
-                    <li>
-                        <span class="badge bg-secondary">@roleCount.Key: @roleCount.Value</span>
-                    </li>
-                }
-            </ul>
+        <div class="card-body">
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <a asp-action="Users" class="text-decoration-none">
+                        <div class="card h-100 shadow-sm hover-card clickable-card">
+                            <div class="card-body text-center">
+                                <div class="mb-3">
+                                    <i class="fas fa-users fa-4x text-info"></i>
+                                </div>
+                                <h3 class="card-title">Users</h3>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="col-md-6">
+                    <a asp-action="RoleRequests" class="text-decoration-none">
+                        <div class="card h-100 shadow-sm hover-card clickable-card">
+                            <div class="card-body text-center">
+                                <div class="mb-3">
+                                    <i class="fas fa-user-tag fa-4x text-info"></i>
+                                </div>
+                                <h3 class="card-title">Role Requests</h3>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
-    <hr />
-    <form asp-action="Index" method="get" class="align-content-center d-flex flex-row gap-3">
-
-        <label class="d-flex flex-row align-items-center me-2 w-100">
-            <span class="me-2 fw-bold">Search:</span>
-            <input type="text" name="searchString" value="@Model?.SearchString" class="form-control" placeholder="Enter username/email"/>
-        </label>
-
-        <label class="d-flex flex-row align-items-center">
-            <span class="me-2 fw-bold">From: </span>
-            <input type="date" name="dateFrom" value="@Model?.DateFrom?" class="form-control" />
-        </label>
-
-        <label class="d-flex flex-row align-items-center">
-            <span class="me-2 fw-bold">To: </span>
-            <input type="date" name="dateTo" value="@Model?.DateTo?" class="form-control" />
-        </label>
-
-        <select asp-for="UserRole" asp-items="Model.Roles" class="form-select me-2">
-            <option value="">All Roles</option>
-        </select>
-
-        <input type="submit" value="Filter" class="btn btn-jade" />
-        <a asp-action="Index" class="btn btn-danger">Clear</a>
-    </form>
-</div>
-
-<div class="container card my-5 px-4 pt-4 pb-3 table-responsive">
-    <table class="table table-striped table-hover table-bordered align-middle">
-        <thead>
-            <tr>
-                <th class="text-center align-middle">Username</th>
-                <th class="text-center align-middle">Email</th>
-                <th class="text-center align-middle">Role</th>
-                <th class="text-center align-middle">Creation Date</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var user in Model.Users!)
-            {
-                <tr>
-                    <td class="text-center align-middle">@user.UserName</td>
-                    <td class="text-center align-middle">@user.Email</td>
-                    <td class="text-center align-middle">@user.Role</td>
-                    <td class="text-center align-middle">@user.CreationDate.ToString("yyyy-MM-dd")</td>
-                    <td class="d-flex flex-column flex-md-row flex-wrap align-items-center justify-content-center gap-2 w-100" style="min-width:0;">
-                        <a asp-action="Edit" asp-route-id="@user.Id" class="btn btn-cadet-blue">Edit</a>
-                        @if (user.Id != User.FindFirstValue(ClaimTypes.NameIdentifier))
-                        {
-                            <a asp-action="Delete" asp-route-id="@user.Id" class="btn btn-danger">Delete</a>
-                        }
-                        <a asp-action="Details" asp-route-id="@user.Id" class="btn btn-jade">Details</a>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
 </div>

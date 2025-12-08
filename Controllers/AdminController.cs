@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using ReportSystem.Data;
 using ReportSystem.Enums;
 using ReportSystem.Models;
 using ReportSystem.Services;
@@ -14,15 +15,23 @@ namespace ReportSystem.Controllers
     {
         private readonly UserManager<User> _userManager;
         private readonly JwtService _jwtService;
+        private readonly ReportSystemDbContext _context;
 
-        public AdminController(UserManager<User> userManager, JwtService jwtService)
+        public AdminController(UserManager<User> userManager, JwtService jwtService, ReportSystemDbContext context)
         {
             _userManager = userManager;
             _jwtService = jwtService;
+            _context = context;
         }
 
-        // GET: Admin
-        public IActionResult Index(string userRole, string searchString, DateTime? dateFrom, DateTime? dateTo)
+        // GET: Admin - Main dashboard
+        public IActionResult Index()
+        {
+            return View();
+        }
+
+        // GET: Admin/Users
+        public IActionResult Users(string userRole, string searchString, DateTime? dateFrom, DateTime? dateTo)
         {
             var filteredUsers = FilterUsersByDate(SearchUsers(FilterUsersByRole(GetUsers(), userRole), searchString), dateFrom, dateTo);
 
@@ -41,9 +50,79 @@ namespace ReportSystem.Controllers
             return View(viewModel);
         }
 
+        // GET: Admin/RoleRequests
+        public async Task<IActionResult> RoleRequests(string status)
+        {
+            var query = _context.RoleRequests
+                .Include(r => r.User)
+                .Include(r => r.ReviewedByUser)
+                .OrderByDescending(r => r.RequestedAt)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(status) && Enum.TryParse<RequestStatus>(status, out var statusEnum))
+            {
+                query = query.Where(r => r.Status == statusEnum);
+            }
+
+            var requests = await query.ToListAsync();
+            ViewData["StatusFilter"] = status;
+
+            return View(requests);
+        }
+
+        // POST: Admin/ApproveRoleRequest/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ApproveRoleRequest(int id, string? reviewNote)
+        {
+            var request = await _context.RoleRequests
+                .Include(r => r.User)
+                .FirstOrDefaultAsync(r => r.Id == id);
+
+            if (request == null)
+                return NotFound();
+
+            var user = await _userManager.FindByIdAsync(request.UserId!);
+            if (user == null)
+                return NotFound();
+
+            user.Role = UserRole.Editor;
+            await _userManager.UpdateAsync(user);
+
+            request.Status = RequestStatus.Approved;
+            request.ReviewedAt = DateTime.UtcNow;
+            request.ReviewedBy = _userManager.GetUserId(User);
+            request.ReviewNote = reviewNote;
+
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = $"Role request approved. {user.UserName} is now an Editor.";
+            return RedirectToAction(nameof(RoleRequests));
+        }
+
+        // POST: Admin/DeclineRoleRequest/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeclineRoleRequest(int id, string? reviewNote)
+        {
+            var request = await _context.RoleRequests.FindAsync(id);
+            if (request == null)
+                return NotFound();
+
+            request.Status = RequestStatus.Denied;
+            request.ReviewedAt = DateTime.UtcNow;
+            request.ReviewedBy = _userManager.GetUserId(User);
+            request.ReviewNote = reviewNote;
+
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Role request has been denied.";
+            return RedirectToAction(nameof(RoleRequests));
+        }
+
         // GET: Admin/Details/5
         [HttpGet]
-        public IActionResult Details(string id)
+        public IActionResult UserDetails(string id)
         {
             var user = GetUserByID(id);
             if (user == null)
@@ -54,7 +133,7 @@ namespace ReportSystem.Controllers
 
         // GET: Admin/Delete/5
         [HttpGet]
-        public IActionResult Delete(string id)
+        public IActionResult UserDelete(string id)
         {
             var user = GetUserByID(id);
             if (user == null)
@@ -71,7 +150,7 @@ namespace ReportSystem.Controllers
 
             if (id == currentUserId)
             {
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Users));
             }
 
             var user = GetUserByID(id);
@@ -81,7 +160,7 @@ namespace ReportSystem.Controllers
             var result = _userManager.DeleteAsync(user).Result;
             if (result.Succeeded)
             {
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Users));
             }
             else
             {
@@ -94,7 +173,7 @@ namespace ReportSystem.Controllers
         }
 
         // GET: Admin/Edit/5
-        public IActionResult Edit(string id)
+        public IActionResult UserEdit(string id)
         {
             var user = GetUserByID(id);
             if (user == null)
@@ -138,7 +217,7 @@ namespace ReportSystem.Controllers
                             var oldRefresh = Request.Cookies["refreshToken"];
                             _jwtService.GenerateAuthCookies(HttpContext, user, oldRefresh);
                         }
-                        return RedirectToAction(nameof(Index));
+                        return RedirectToAction(nameof(Users));
                     }
 
                     foreach (var error in result.Errors)
