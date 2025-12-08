@@ -10,24 +10,27 @@ public class AuthController : Controller
     private readonly SignInManager<User> _signInManager;
     private readonly JwtService _jwtService;
     private readonly SessionService _sessionService;
+    private readonly ILogger<AuthController> _logger;
 
     public AuthController(
         UserManager<User> userManager,
         SignInManager<User> signInManager,
         JwtService jwtService,
-        SessionService sessionService)
+        SessionService sessionService,
+        ILogger<AuthController> logger)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _jwtService = jwtService;
         _sessionService = sessionService;
+        _logger = logger;
     }
 
     [HttpGet]
     public IActionResult Register() => View();
 
     [HttpPost]
-    [ValidateAntiForgeryToken]
+    [IgnoreAntiforgeryToken]
     public async Task<IActionResult> Register(RegisterRequest request)
     {
         if (!ModelState.IsValid)
@@ -57,6 +60,8 @@ public class AuthController : Controller
 
         _jwtService.GenerateAuthCookies(HttpContext, user);
 
+        ClearAntiforgeryCookies();
+
         return RedirectToAction("Index", "Home");
     }
 
@@ -64,7 +69,7 @@ public class AuthController : Controller
     public IActionResult Login() => View();
 
     [HttpPost]
-    [ValidateAntiForgeryToken]
+    [IgnoreAntiforgeryToken]
     public async Task<IActionResult> Login(LoginRequest request)
     {
         if (!ModelState.IsValid)
@@ -86,6 +91,8 @@ public class AuthController : Controller
 
         _jwtService.GenerateAuthCookies(HttpContext, user);
 
+        ClearAntiforgeryCookies();
+
         return RedirectToAction("Index", "Home");
     }
 
@@ -106,6 +113,20 @@ public class AuthController : Controller
 
         await _signInManager.SignOutAsync();
 
+        ClearAntiforgeryCookies();
+
         return RedirectToAction("Login");
+    }
+
+    private void ClearAntiforgeryCookies()
+    {
+        var antiforgeryCookies = Request.Cookies.Keys
+            .Where(k => k.StartsWith(".AspNetCore.Antiforgery"))
+            .ToList();
+
+        foreach (var cookie in antiforgeryCookies)
+        {
+            Response.Cookies.Delete(cookie);
+        }
     }
 }
