@@ -58,15 +58,15 @@ namespace ReportSystem.Middlewares
                         context.Response.Cookies.Append("accessToken", newAccessToken, new CookieOptions
                         {
                             HttpOnly = true,
-                            Secure = true,
-                            SameSite = SameSiteMode.Strict
+                            Secure = false,
+                            SameSite = SameSiteMode.Lax
                         });
 
                         context.Response.Cookies.Append("refreshToken", newRefreshToken, new CookieOptions
                         {
                             HttpOnly = true,
-                            Secure = true,
-                            SameSite = SameSiteMode.Strict
+                            Secure = false,
+                            SameSite = SameSiteMode.Lax
                         });
 
                         context.Request.Headers["Authorization"] = $"Bearer {newAccessToken}";

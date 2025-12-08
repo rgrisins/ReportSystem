@@ -79,6 +79,14 @@ builder.Services.AddAuthentication(options =>
 // Add authorization services
 builder.Services.AddAuthorization();
 
+// Configure Antiforgery with new cookie name to avoid old key conflicts
+builder.Services.AddAntiforgery(options =>
+{
+    options.Cookie.Name = ".AspNetCore.Antiforgery.v2";
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.None;
+});
+
 // Build the web application
 var app = builder.Build();
 
@@ -98,6 +106,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+// Only use HTTPS redirection in development
 if (app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
