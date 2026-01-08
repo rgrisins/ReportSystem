@@ -45,6 +45,7 @@
                         {
                             <li class="nav-item me-2 d-flex align-content-center">
                                 <form asp-area="" asp-controller="Auth" asp-action="Logout" method="post" class="d-flex align-content-center">
+                                    @Html.AntiForgeryToken()
                                     <button type="submit" class="btn btn-link nav-link">
                                         Logout (@User.Identity.Name)
                                     </button>

@@ -30,6 +30,7 @@ public class AuthController : Controller
     public IActionResult Register() => View();
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(RegisterRequest request)
     {
         if (!ModelState.IsValid)
@@ -66,6 +67,7 @@ public class AuthController : Controller
     public IActionResult Login() => View();
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login(LoginRequest request)
     {
         if (!ModelState.IsValid)
@@ -91,6 +93,7 @@ public class AuthController : Controller
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
         if (Request.Cookies.TryGetValue("refreshToken", out var refreshToken))

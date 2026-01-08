@@ -45,6 +45,12 @@ builder.Services.AddDefaultIdentity<User>(options =>
 // Add controllers with views support
 builder.Services.AddControllersWithViews();
 
+// Configure antiforgery token
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-CSRF-TOKEN";
+});
+
 // Configure JWT authentication
 builder.Services.AddAuthentication(options =>
 {

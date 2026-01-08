@@ -127,6 +127,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <form asp-action="ApproveRoleRequest" method="post">
+                @Html.AntiForgeryToken()
                 <input type="hidden" name="id" id="approveRequestId" />
                 <div class="modal-header">
                     <h5 class="modal-title">Approve Request</h5>
@@ -152,6 +153,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <form asp-action="DeclineRoleRequest" method="post">
+                @Html.AntiForgeryToken()
                 <input type="hidden" name="id" id="declineRequestId" />
                 <div class="modal-header">
                     <h5 class="modal-title">Decline Request</h5>
