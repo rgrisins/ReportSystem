@@ -1,7 +1,7 @@
-﻿using System;
+﻿using ReportSystem.Enums;
+using ReportSystem.Validation;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using ReportSystem.Enums;
 
 namespace ReportSystem.Models
 {
@@ -16,21 +16,37 @@ namespace ReportSystem.Models
         [Display(Name = "Report Date")]
         [DataType(DataType.Date)]
         [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}", ApplyFormatInEditMode = true)]
+        [MaxDateToday]
         public DateTime ReportDate { get; set; }
 
         [Required]
         [StringLength(255)]
         public string? Description { get; set; }
 
-        [RegularExpression(@"^[A-Z]+[a-zA-Z\s]*$")]
-        [StringLength(12)]
         [Required]
-        public string? Status { get; set; }
+        public ReportStatus Status { get; set; }
 
         [Display(Name = "Importance Rating")]
-        [RegularExpression(@"^[A-Z]+[a-zA-Z0-9""'\s-]*$")]
-        [StringLength(6)]
         [Required]
-        public string? ImportanceRating { get; set; }
+        public ImportanceRating ImportanceRating { get; set; }
+
+        [Display(Name = "Created By")]
+        public string? CreatedBy { get; set; }
+
+        [Display(Name = "Last Modified By")]
+        public string? LastModifiedBy { get; set; }
+
+        [ForeignKey("CreatedBy")]
+        public User? CreatedByUser { get; set; }
+
+        [ForeignKey("LastModifiedBy")]
+        public User? LastModifiedByUser { get; set; }
+
+        [Display(Name = "Last Modified At")]
+        [DataType(DataType.DateTime)]
+        [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}")]
+        public DateTime? LastModifiedAt { get; set; }
+
+        public ICollection<ReportAttachment> Attachments { get; set; } = new List<ReportAttachment>();
     }
 }

@@ -13,10 +13,16 @@ public class HelloWorldController : Controller
     }
 
     // GET: /HelloWorld/Welcome/ 
-    public IActionResult Welcome(string name, int numTimes = 1)
+    public IActionResult Welcome(string name = "Guest", int numTimes = 1)
     {
-        ViewData["Message"] = "Hello" + name;
-        ViewData["NumTimes"] = numTimes;
+        SetWelcomeViewData(name, numTimes);
         return View();
+    }
+
+    // A method to set the "Welcome" ViewData
+    private void SetWelcomeViewData(string name, int numTimes)
+    {
+        ViewData["Message"] = "Hello " + HtmlEncoder.Default.Encode(name);
+        ViewData["NumTimes"] = numTimes;
     }
 }

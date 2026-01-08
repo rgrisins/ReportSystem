@@ -5,10 +5,10 @@ namespace ReportSystem.Enums
     public enum ReportStatus
     {
         [Display(Name = "Not Reviewed")]
-        NotReviewed,
+        Not_Reviewed,
 
         [Display(Name = "Under Review")]
-        UnderReview,
+        Under_Review,
 
         Reviewed
     }

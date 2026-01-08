@@ -1,0 +1,198 @@
+﻿@using ReportSystem.Enums
+@model IEnumerable<ReportSystem.Models.RoleRequest>
+@{
+    ViewData["Title"] = "Role Requests";
+    var statusFilter = ViewData["StatusFilter"] as string;
+}
+
+<div class="container card my-5 px-4 pt-4 pb-3">
+    <h2 class="text-center bg-dark-subtle rounded-2 py-2 mb-3">ROLE REQUESTS</h2>
+    <hr />
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <strong>Success!</strong> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="mb-3">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Filter by Status:</label>
+                <select name="status" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Statuses</option>
+                    <option value="Pending" selected="@(statusFilter == "Pending")">Pending</option>
+                    <option value="Approved" selected="@(statusFilter == "Approved")">Approved</option>
+                    <option value="Denied" selected="@(statusFilter == "Denied")">Denied</option>
+                </select>
+            </div>
+        </form>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            No role requests found.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Reason</th>
+                        <th>Requested</th>
+                        <th>Status</th>
+                        <th>Reviewed By</th>
+                        <th>Review Note</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var request in Model)
+                    {
+                        <tr>
+                            <td>@(request.User?.UserName ?? "Unknown")</td>
+                            <td>@(request.User?.Email ?? "Unknown")</td>
+                            <td>@request.Reason</td>
+                            <td>@request.RequestedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>
+                                @if (request.Status == RequestStatus.Pending)
+                                {
+                                    <span class="badge bg-warning text-dark">Pending</span>
+                                }
+                                else if (request.Status == RequestStatus.Approved)
+                                {
+                                    <span class="badge bg-success">Approved</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Denied</span>
+                                }
+                            </td>
+                            <td>
+                                @if (request.ReviewedByUser != null)
+                                {
+                                    @request.ReviewedByUser.UserName
+                                    <br />
+                                    <small class="text-muted">@request.ReviewedAt?.ToString("yyyy-MM-dd HH:mm")</small>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td>@(request.ReviewNote ?? "-")</td>
+                            <td>
+                                @if (request.Status == RequestStatus.Pending)
+                                {
+                                    <button type="button" class="btn btn-sm btn-success mb-1" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#approveModal"
+                                            data-request-id="@request.Id"
+                                            data-user-name="@request.User?.UserName">
+                                        Approve
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-danger" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#declineModal"
+                                            data-request-id="@request.Id"
+                                            data-user-name="@request.User?.UserName">
+                                        Decline
+                                    </button>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<div class="mt-3">
+    <a asp-action="Index" class="btn btn-secondary">← Back to Admin Panel</a>
+</div>
+
+<div class="modal fade" id="approveModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="ApproveRoleRequest" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="approveRequestId" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Approve Request</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Approve Editor role for <strong id="approveUserName"></strong>?</p>
+                    <div class="mb-3">
+                        <label class="form-label">Review Note (optional):</label>
+                        <textarea class="form-control" name="reviewNote" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Approve</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="declineModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="DeclineRoleRequest" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="declineRequestId" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Decline Request</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Decline Editor role request from <strong id="declineUserName"></strong>?</p>
+                    <div class="mb-3">
+                        <label class="form-label">Review Note (optional):</label>
+                        <textarea class="form-control" name="reviewNote" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Decline</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('approveModal').addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var requestId = button.getAttribute('data-request-id');
+            var userName = button.getAttribute('data-user-name');
+            
+            document.getElementById('approveRequestId').value = requestId;
+            document.getElementById('approveUserName').textContent = userName;
+        });
+
+        document.getElementById('declineModal').addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var requestId = button.getAttribute('data-request-id');
+            var userName = button.getAttribute('data-user-name');
+            
+            document.getElementById('declineRequestId').value = requestId;
+            document.getElementById('declineUserName').textContent = userName;
+        });
+    </script>
+}

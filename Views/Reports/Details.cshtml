@@ -4,45 +4,102 @@
     ViewData["Title"] = "Details";
 }
 
-<h1>Details</h1>
+<div class="container card my-5 px-4 pt-4 pb-3">
+    <h1 class="text-center bg-dark-subtle rounded-2 py-2 mb-3">DETAILS</h1>
+    <hr/>
+    <div>
+        <h4>Report</h4>
+        <hr/>
+        <dl class="row">
+            <dt class="col-sm-2">
+                @Html.DisplayNameFor(model => model.Title)
+            </dt>
+            <dd class="col-sm-10">
+                @Html.DisplayFor(model => model.Title)
+            </dd>
+            <dt class="col-sm-2">
+                @Html.DisplayNameFor(model => model.Description)
+            </dt>
+            <dd class="col-sm-10">
+                @Html.DisplayFor(model => model.Description)
+            </dd>
+            <dt class="col-sm-2">
+                @Html.DisplayNameFor(model => model.Status)
+            </dt>
+            <dd class="col-sm-10">
+                @Html.DisplayFor(model => model.Status)
+            </dd>
+            <dt class="col-sm-2">
+                @Html.DisplayNameFor(model => model.ImportanceRating)
+            </dt>
+            <dd class="col-sm-10">
+                @Html.DisplayFor(model => model.ImportanceRating)
+            </dd>
+            <dt class="col-sm-2">
+                Created By
+            </dt>
+            <dd class="col-sm-10">
+                @(Model.CreatedByUser?.UserName ?? "Unknown")
+                <br />
+                <small class="text-muted">@Html.DisplayFor(model => model.ReportDate)</small>
+            </dd>
+            @if (Model.LastModifiedByUser != null)
+            {
+                <dt class="col-sm-2">
+                    Last Modified By
+                </dt>
+                <dd class="col-sm-10">
+                    @Model.LastModifiedByUser.UserName
+                    <br />
+                    <small class="text-muted">@Html.DisplayFor(model => model.LastModifiedAt)</small>
+                </dd>
+            }
+        </dl>
+    </div>
 
-<div>
-    <h4>Report</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Title)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Title)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ReportDate)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ReportDate)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Description)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Description)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Status)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Status)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.ImportanceRating)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.ImportanceRating)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+    @if (Model.Attachments != null && Model.Attachments.Any())
+    {
+        <hr />
+        <h4 class="mb-3">Attachments</h4>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>File Name</th>
+                        <th>Size</th>
+                        <th>Uploaded By</th>
+                        <th>Uploaded At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var attachment in Model.Attachments)
+                    {
+                        <tr>
+                            <td>@attachment.FileName</td>
+                            <td>
+                                @(attachment.FileSize / 1024.0 < 1 ? "<1KB" : Math.Round(attachment.FileSize / 1024.0) + "KB")
+                            </td>
+                            <td>@(attachment.UploadedByUser?.UserName ?? "Unknown")</td>
+                            <td>@attachment.UploadedAt.ToString("g")</td>
+                            <td>
+                                <a asp-action="DownloadAttachment" asp-route-id="@attachment.Id" class="btn btn-sm btn-jade">
+                                    Download
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <hr/>
+    <div>
+        @if (User.IsInRole("Admin") || User.IsInRole("Editor"))
+        {
+            <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-cadet-blue me-3">Edit</a>
+        }
+        <a asp-action="Index" class="btn btn-jade">Back to List</a>
+    </div>
 </div>

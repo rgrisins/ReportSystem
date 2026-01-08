@@ -13,6 +13,13 @@
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
+## User secrets
+**/secrets.json
+
+# Production settings 
+appsettings.Production.json
+reportsystem.tar
+
 # Mono auto generated files
 mono_crash.*
 
@@ -361,3 +368,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Uploaded files
+wwwroot/uploads/

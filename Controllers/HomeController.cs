@@ -1,6 +1,6 @@
-using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using ReportSystem.Models;
+using System.Diagnostics;
 
 namespace ReportSystem.Controllers
 {
@@ -28,5 +28,22 @@ namespace ReportSystem.Controllers
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
+
+        // Handle 404 Not Found errors
+        public IActionResult NotFoundPage()
+        {
+            var originalPath = HttpContext.Request.Query["originalPath"].FirstOrDefault();
+            ViewData["Path"] = originalPath;
+            return View("NotFound");
+        }
+
+        // Handle 403 Forbidden errors
+        public IActionResult ForbiddenPage()
+        {
+            var originalPath = HttpContext.Request.Query["originalPath"].FirstOrDefault();
+            ViewData["Path"] = originalPath;
+            return View("Forbidden");
+        }
+
     }
 }

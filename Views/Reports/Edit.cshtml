@@ -4,51 +4,119 @@
     ViewData["Title"] = "Edit";
 }
 
-<h1>Edit</h1>
+<div class="container card my-5 px-4 pt-4 pb-3">
 
-<h4>Report</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Id" />
-            <div class="form-group">
-                <label asp-for="Title" class="control-label"></label>
-                <input asp-for="Title" class="form-control" />
-                <span asp-validation-for="Title" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ReportDate" class="control-label"></label>
-                <input asp-for="ReportDate" class="form-control" />
-                <span asp-validation-for="ReportDate" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Description" class="control-label"></label>
-                <input asp-for="Description" class="form-control" />
-                <span asp-validation-for="Description" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Status" class="control-label"></label>
-                <input asp-for="Status" class="form-control" />
-                <span asp-validation-for="Status" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ImportanceRating" class="control-label"></label>
-                <input asp-for="ImportanceRating" class="form-control" />
-                <span asp-validation-for="ImportanceRating" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
+    <h1 class="text-center bg-dark-subtle rounded-2 py-2 mb-2">Edit</h1>
+    <hr />
+    <h4 class="mb-0">Report</h4>
+    <hr />
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    <div class="row">
+        <div class="col-md-6">
+            <form asp-action="Edit" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <input type="hidden" asp-for="Id" />
+                <div class="form-group mb-3">
+                    <label asp-for="Title" class="control-label"></label>
+                    <input asp-for="Title" class="form-control" />
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
+                <div class="form-group mb-3">
+                    <label asp-for="Description" class="control-label"></label>
+                    <input asp-for="Description" class="form-control" />
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+                <div class="form-group mb-3">
+                    <label asp-for="Status" class="control-label"></label>
+                    <select asp-for="Status" class="form-select" asp-items="Html.GetEnumSelectList<ReportSystem.Enums.ReportStatus>()"></select>
+                    <span asp-validation-for="Status" class="text-danger"></span>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="ImportanceRating" class="control-label"></label>
+                    <select asp-for="ImportanceRating" class="form-select" asp-items="Html.GetEnumSelectList<ReportSystem.Enums.ImportanceRating>()"></select>
+                    <span asp-validation-for="ImportanceRating" class="text-danger"></span>
+                </div>
+
+                <div class="form-group mb-4">
+                    <label class="control-label">Add New Attachments</label>
+                    <input type="file" name="attachments" class="form-control" multiple accept=".xlsx,.xls,.txt,.json,.csv,.pdf,.docx,.doc" />
+                    <small class="form-text text-muted">
+                        Allowed file types: Excel, Word, PDF, TXT, JSON, CSV (Max 10 MB per file)
+                    </small>
+                    @if (ViewData.ModelState.ContainsKey("attachments"))
+                    {
+                        <div class="text-danger mt-2">
+                            @foreach (var error in ViewData.ModelState["attachments"]!.Errors)
+                            {
+                                <div>@error.ErrorMessage</div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <div class="form-group d-flex flex-row mb-2">
+                    <input type="submit" value="Save" class="btn btn-primary btn-cadet-blue me-3" />
+                    <a asp-action="Index" class="btn btn-jade">Back to List</a>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
+    @if (Model.Attachments != null && Model.Attachments.Any())
+    {
+        <hr />
+        <h4 class="mb-3">Current Attachments</h4>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>File Name</th>
+                        <th>Size</th>
+                        <th>Uploaded By</th>
+                        <th>Uploaded At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var attachment in Model.Attachments)
+                    {
+                        <tr>
+                            <td>@attachment.FileName</td>
+                            <td>
+                                @(attachment.FileSize / 1024.0 < 1 ? "<1KB" : Math.Round(attachment.FileSize / 1024.0) + "KB")
+                            </td>
+                            <td>@(attachment.UploadedByUser?.UserName ?? "Unknown")</td>
+                            <td>@attachment.UploadedAt.ToString("g")</td>
+                            <td>
+                                <a asp-action="DownloadAttachment" asp-route-id="@attachment.Id" class="btn btn-sm btn-jade me-1">
+                                    Download
+                                </a>
+                                <form asp-action="DeleteAttachment" asp-route-id="@attachment.Id" method="post" style="display:inline;">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this file?')">
+                                        Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

@@ -1,0 +1,12 @@
+**/.vs
+**/.vscode
+**/bin
+**/obj
+**/.git
+**/.gitignore
+**/Dockerfile
+**/docker-compose*
+**/*.md
+**/secrets.json
+**/appsettings.Development.json
+wwwroot/uploads/

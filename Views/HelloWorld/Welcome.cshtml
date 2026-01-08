@@ -2,11 +2,13 @@
     ViewData["Title"] = "Welcome";
 }
 
-<h2>Welcome</h2>
-
-<ul>
-    @for (int i = 0; i < (int)ViewData["NumTimes"]; i++)
-    {
-         <li>@ViewData["Message"]</li>
-    }
-</ul>
+<div class="container card my-5 px-4 pt-4 pb-3">
+    <h2 class="text-center bg-dark-subtle rounded-2 py-2 mb-2">Welcome</h2>
+    <hr/>
+    <ul>
+        @for (int i = 0; i < (int)ViewData["NumTimes"]; i++)
+        {
+            <li>@ViewData["Message"]</li>
+        }
+    </ul>
+</div>
